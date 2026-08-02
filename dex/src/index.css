@@ -1,0 +1,153 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap');
+
+:root {
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: 'Sora', 'Inter', sans-serif;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  height: 100vh;
+  width: 100vw;
+  background-color: #000000 !important;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px),
+    radial-gradient(circle at 15% 20%, rgba(0, 217, 255, 0.14), transparent 35%),
+    radial-gradient(circle at 85% 15%, rgba(255, 46, 230, 0.14), transparent 35%),
+    radial-gradient(circle at 50% 100%, rgba(0, 217, 255, 0.08), transparent 45%),
+    radial-gradient(ellipse at center, #060608 0%, #000000 80%);
+  background-size: 46px 46px, 46px 46px, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
+  background-attachment: fixed;
+  color: white;
+}
+
+/* Thin, on-brand scrollbar instead of the default chunky browser one */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 46, 230, 0.35);
+  border-radius: 100px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 46, 230, 0.6);
+  background-clip: padding-box;
+}
+* {
+  scrollbar-color: rgba(255, 46, 230, 0.4) transparent;
+  scrollbar-width: thin;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
+    monospace;
+}
+
+.ant-input {
+  background-color: #17171f !important;
+  color: white !important;
+  border-width: 0px !important;
+  height: 96px !important;
+  margin-bottom: 5px;
+  font-size: 35px;
+  font-family: var(--font-display) !important;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.5px;
+  border-radius: 14px !important;
+  transition: box-shadow 0.25s ease, background-color 0.25s ease !important;
+  box-shadow: 0 0 0 1px transparent !important;
+}
+
+.ant-input:hover {
+  background-color: #20202a !important;
+}
+
+.ant-input:focus {
+  background-color: #20202a !important;
+  box-shadow: 0 0 0 2px rgba(255, 46, 230, 0.6) !important;
+}
+
+.ant-input::placeholder {
+  color: #5f6783 !important;
+}
+
+.ant-popover-arrow {
+  visibility: hidden;
+}
+
+.ant-popover-title {
+  color: white !important;
+}
+
+.ant-popover-inner-content {
+  color: white !important;
+}
+
+.ant-popover-inner {
+  min-width: 260px !important;
+  min-height: 140px !important;
+  border: 1px solid #1c1c24;
+  background-color: #0c0c10 !important;
+}
+
+.ant-radio-group {
+  margin-top: 10px;
+}
+
+.ant-radio-button-wrapper {
+  background-color: #17171f !important;
+  color: white !important;
+  font-weight: 500;
+  border-color: white !important;
+}
+
+.ant-radio-button-wrapper-checked {
+  border-color: white !important;
+  background-color: #33333f !important;
+}
+
+.ant-radio-button-wrapper-checked::before {
+  background-color: white !important;
+}
+
+.ant-modal-content {
+  background-color: #0c0c10 !important;
+  color: white !important;
+  padding: 0px !important;
+}
+
+.ant-modal {
+  border: 1px solid #33333f;
+  width: 400px !important;
+  border-radius: 10px;
+}
+
+.ant-modal-header {
+  background-color: #0c0c10 !important;
+}
+
+.ant-modal-title {
+  color: white !important;
+  padding-top: 17px !important;
+  margin-left: 20px !important;
+}
+
+.ant-modal-close-icon {
+  color: #33333f !important;
+  transition: 0.3s;
+}
+
+.ant-modal-close-icon:hover {
+  color: white !important;
+}

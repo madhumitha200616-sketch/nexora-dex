@@ -1,0 +1,1970 @@
+.App {
+  text-align: center;
+}
+
+/* Follows the mouse (position set via JS transform in CursorGlow.js) -
+   a soft ambient light rather than a literal cursor replacement, sits
+   behind all content and never intercepts clicks. */
+.cursorGlow {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 500px;
+  height: 500px;
+  margin-left: -250px;
+  margin-top: -250px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(0, 217, 255, 0.10) 0%,
+    rgba(255, 46, 230, 0.06) 40%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  will-change: transform;
+}
+
+header {
+  height: 88px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-left: 50px;
+  padding-right: 50px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255, 46, 230, 0.15);
+  animation: headerDropIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Header falls in from above on page load, complementing the cards below
+   it fading UP into place (fadeInUp) - the two entrances meet in the
+   middle instead of everything moving the same direction. */
+@keyframes headerDropIn {
+  from { opacity: 0; transform: translateY(-30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.logo{
+  width: auto;
+  height: 55px;
+  padding-right: 30px;
+  transition: filter 0.3s ease, transform 0.3s ease;
+}
+
+.logo:hover {
+  filter: drop-shadow(0 0 10px rgba(255, 46, 230, 0.5));
+  transform: scale(1.03);
+}
+
+.eth{
+  width: 20px;
+  height: 20px;
+  padding-right: 10px;
+
+}
+
+.leftH {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.rightH {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 20px;
+}
+
+.headerItem {
+  position: relative;
+  padding: 10px;
+  padding-left: 15px;
+  padding-right: 15px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: 14px;
+  letter-spacing: 0.1px;
+  transition: 0.25s ease;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+.headerItem::after {
+  content: "";
+  position: absolute;
+  left: 15px;
+  right: 15px;
+  bottom: 4px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #00d9ff, #ff2ee6);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s ease;
+}
+
+.headerItem:hover {
+  background-color: rgb(34, 42, 58);
+  cursor: pointer;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 217, 255, 0.12);
+}
+
+.headerItem:hover::after {
+  transform: scaleX(1);
+}
+
+.connectButton {
+  background: linear-gradient(90deg, rgba(0,217,255,0.25), rgba(255,46,230,0.25));
+  border: 1px solid rgba(255, 46, 230, 0.4);
+  padding: 10px;
+  padding-right: 20px;
+  padding-left: 20px;
+  border-radius: 100px;
+  color: #7df9ff;
+  font-weight: bold;
+  transition: 0.25s ease;
+}
+
+.connectButton:hover {
+  cursor: pointer;
+  color: white;
+  background: linear-gradient(90deg, rgba(0,217,255,0.45), rgba(255,46,230,0.45));
+  border-color: rgba(255, 46, 230, 0.8);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(255, 46, 230, 0.3);
+}
+
+.mainWindow {
+  margin-top: 40px;
+  display: flex;
+  justify-content: center;
+}
+
+.link {
+  text-decoration: none;
+  color: white;
+}
+
+.tradeBox {
+  width: 480px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  min-height: 300px;
+  border-radius: 22px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  padding-left: 30px;
+  padding-right: 30px;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.03),
+              0 25px 70px rgba(0, 217, 255, 0.18),
+              0 10px 40px rgba(255, 46, 230, 0.22);
+  transition: box-shadow 0.4s ease, transform 0.15s ease-out;
+  will-change: transform;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  /* Slow-moving gradient "ring" border for a premium fintech-card feel,
+     instead of a flat static border color. */
+  border: 1px solid transparent;
+  background:
+    linear-gradient(rgba(13, 16, 29, 0.82), rgba(13, 16, 29, 0.82)) padding-box,
+    linear-gradient(135deg, rgba(255, 46, 230, 0.7), rgba(0, 217, 255, 0.55), rgba(255, 46, 230, 0.7)) border-box;
+  background-size: 100% 100%, 220% 220%;
+  animation: fadeInUp 0.55s ease both, borderFlow 8s ease infinite 0.55s;
+}
+
+@keyframes borderFlow {
+  0% { background-position: 0% 0%, 0% 50%; }
+  50% { background-position: 0% 0%, 100% 50%; }
+  100% { background-position: 0% 0%, 0% 50%; }
+}
+
+/* Shared entrance animation - every main content card (trade box, chart,
+   tokens/wrap/faucets pages) drifts up and fades in on mount instead of
+   just popping onto the screen. Small touch, makes the whole app feel
+   noticeably more polished. */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.tradeBox::before {
+  content: "";
+  position: absolute;
+  top: -60px;
+  right: -60px;
+  width: 220px;
+  height: 220px;
+  background: radial-gradient(circle, rgba(255, 46, 230, 0.35) 0%, rgba(0, 217, 255, 0.18) 45%, transparent 70%);
+  filter: blur(10px);
+  border-radius: 50%;
+  z-index: -1;
+  pointer-events: none;
+  animation: orbFloat1 9s ease-in-out infinite;
+}
+
+.tradeBox::after {
+  content: "";
+  position: absolute;
+  bottom: -80px;
+  left: -80px;
+  width: 220px;
+  height: 220px;
+  background: radial-gradient(circle, rgba(0, 217, 255, 0.25) 0%, transparent 70%);
+  filter: blur(10px);
+  border-radius: 50%;
+  z-index: -1;
+  pointer-events: none;
+  animation: orbFloat2 11s ease-in-out infinite;
+}
+
+/* Slow, subtle 3D drift for the two glow orbs behind the card - depth cue
+   rather than a flat static blob. */
+@keyframes orbFloat1 {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(-14px, 16px, 40px) scale(1.08); }
+}
+
+@keyframes orbFloat2 {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(16px, -14px, 30px) scale(1.1); }
+}
+
+.tradeBox:hover {
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.06),
+              0 30px 80px rgba(0, 217, 255, 0.24),
+              0 12px 46px rgba(255, 46, 230, 0.35);
+}
+
+
+.tradeBoxHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 98%;
+}
+
+.tradeBoxHeader h4 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 19px;
+  letter-spacing: -0.2px;
+  margin: 0;
+}
+
+.cog {
+  color: #51586f;
+  transition: 0.3s;
+}
+
+.cog:hover {
+  color: white;
+  rotate: 90deg;
+  cursor: pointer;
+}
+
+.switchButton {
+  background-color: #2a2a35;
+  width: 25px;
+  height: 25px;
+  align-items: center;
+  justify-content: center;
+  display: flex;
+  border-radius: 8px;
+  position: absolute;
+  top: 86px;
+  left: 180px;
+  color: #5F6783;
+  border: 3px solid #0c0c10;
+  font-size: 12px;
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.3s, color 0.3s;
+  transform-style: preserve-3d;
+}
+
+.dollarAmount {
+  position: absolute;
+  top: 75px;
+  left: 14px;
+  font-size: 10px;
+  color: #5F6783;
+}
+
+/* 3D coin-flip instead of a flat 2D rotate - the arrow spins around the
+   vertical axis like a flipped coin rather than just turning in place. */
+.switchButton:hover {
+  color: white;
+  cursor: pointer;
+  background-color: #3a3a48;
+  transform: rotateY(180deg) scale(1.15);
+}
+
+/* Full 360 spin every time the tokens actually switch (the icon element
+   remounts via a changing `key` in Swap.js, which replays this from
+   scratch on every click, independent of the hover coin-flip above). */
+.switchArrow {
+  animation: switchArrowSpin 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes switchArrowSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Brief animated checkmark shown over the trade box right after a swap
+   confirms (Swap.js's confirmSwap, alongside the existing message.success
+   toast) - classic "draw the circle then draw the check" success motion. */
+.swapSuccessOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  background: rgba(8, 10, 20, 0.82);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: swapSuccessFade 2.2s ease both;
+  pointer-events: none;
+}
+
+.swapSuccessCheck {
+  width: 84px;
+  height: 84px;
+}
+
+.swapSuccessCheckCircle {
+  stroke: #00e6a0;
+  stroke-width: 2.5;
+  stroke-miterlimit: 10;
+  stroke-dasharray: 166;
+  stroke-dashoffset: 166;
+  filter: drop-shadow(0 0 10px rgba(0, 230, 160, 0.6));
+  animation: swapSuccessDrawCircle 0.5s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+}
+
+.swapSuccessCheckMark {
+  stroke: #00e6a0;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 48;
+  stroke-dashoffset: 48;
+  animation: swapSuccessDrawCheck 0.35s 0.45s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+}
+
+.swapSuccessText {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 16px;
+  color: white;
+  opacity: 0;
+  animation: swapSuccessTextIn 0.4s 0.7s ease forwards;
+}
+
+@keyframes swapSuccessDrawCircle {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes swapSuccessDrawCheck {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes swapSuccessTextIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes swapSuccessFade {
+  0% { opacity: 0; }
+  10% { opacity: 1; }
+  82% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.inputs {
+  position: relative;
+  perspective: 600px;
+}
+
+.assetOne {
+  position: absolute;
+  min-width: 50px;
+  height: 30px;
+  background-color: #2a2a35;
+  top: 36px;
+  right: 20px;
+  border-radius: 100px;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 5px;
+  font-weight: bold;
+  font-size: 17px;
+  padding-right: 8px;
+  transition: 0.25s ease;
+}
+
+.assetTwo {
+  position: absolute;
+  min-width: 50px;
+  height: 30px;
+  background-color: #2a2a35;
+  top: 135px;
+  right: 20px;
+  border-radius: 100px;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 5px;
+  font-weight: bold;
+  font-size: 17px;
+  padding-right: 8px;
+  transition: 0.25s ease;
+}
+
+.assetOne:hover{
+  cursor: pointer;
+  background-color: #3a3a48;
+  transform: scale(1.04);
+}
+
+.assetTwo:hover{
+  cursor: pointer;
+  background-color: #3a3a48;
+  transform: scale(1.04);
+}
+
+.assetLogo {
+  height: 22px;
+  margin-left: 5px;
+}
+
+.swapButton {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(90deg, #00d9ff 0%, #ff2ee6 100%);
+  width: calc(100%);
+  height: 55px;
+  font-size: 19px;
+  border-radius: 14px;
+  color: white;
+  font-weight: 700;
+  font-family: var(--font-display);
+  letter-spacing: 0.2px;
+  transition: 0.3s;
+  margin-bottom: 30px;
+  margin-top: 8px;
+  box-shadow: 0 4px 20px rgba(255, 46, 230, 0.35);
+  border: none;
+  outline: none;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Shine sweep across the button on hover, like a premium fintech CTA */
+.swapButton::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -60%;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(120deg, transparent, rgba(255,255,255,0.35), transparent);
+  transform: skewX(-20deg);
+  transition: left 0.6s ease;
+  pointer-events: none;
+}
+
+.swapButton:hover::before {
+  left: 130%;
+}
+
+.swapButton[disabled] {
+  background: #243056;
+  opacity: 0.4;
+  color: #5982f39b;
+  box-shadow: none;
+}
+
+.swapButton[disabled]:hover {
+  cursor: not-allowed;
+  background: #243056;
+}
+
+.swapButton[disabled]::before {
+  display: none;
+}
+
+.swapButton:hover {
+  cursor: pointer;
+  filter: brightness(1.12);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(255, 46, 230, 0.5);
+}
+
+.swapButton:active {
+  transform: translateY(0px);
+}
+
+.tokenLogo {
+  height: 40px;
+  width: 40px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.04), 0 4px 12px rgba(0,0,0,0.35);
+  transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Coin-flip spin when you hover a token row, purely decorative depth cue */
+.tokenChoice:hover .tokenLogo {
+  transform: rotateY(360deg);
+}
+
+.modalContent {
+  border-top: 1px solid #33333f;
+  /* padding-top: 20px; */
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px
+}
+
+.tokenChoice {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  padding-left: 20px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  border-radius: 12px;
+  perspective: 200px;
+  transition: 0.2s ease;
+}
+
+.tokenChoice:hover {
+  cursor: pointer;
+  background-color: #17171f;
+  padding-left: 25px;
+  box-shadow: 0 0 0 1px rgba(255, 46, 230, 0.25);
+}
+
+.tokenChoice:active {
+  transform: scale(0.98);
+}
+
+.tokenName {
+  margin-left: 10px;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.tokenTicker {
+  margin-left: 10px;
+  font-size: 13px;
+  font-weight: 300;
+  color: #51596f;
+}
+.brandName {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  margin-right: 30px;
+  background: linear-gradient(90deg, #00d9ff 0%, #ff2ee6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.quotingRow {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #8b93ac;
+  margin-top: -4px;
+  margin-bottom: 6px;
+}
+
+.quotingShimmer {
+  width: 70px;
+  height: 8px;
+  border-radius: 100px;
+  background: linear-gradient(90deg, #1c1c24 25%, #2a2a35 50%, #1c1c24 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.2s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.rateRow {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #8b93ac;
+  margin-top: -4px;
+  margin-bottom: 6px;
+}
+
+.liveDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ff2ee6;
+  box-shadow: 0 0 0 rgba(255, 46, 230, 0.6);
+  animation: livePulse 1.6s infinite;
+}
+
+@keyframes livePulse {
+  0% { box-shadow: 0 0 0 0 rgba(255, 46, 230, 0.6); }
+  70% { box-shadow: 0 0 0 6px rgba(255, 46, 230, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 46, 230, 0); }
+}
+
+.gasEstimateRow {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #7de0ff;
+  margin-top: -2px;
+  margin-bottom: 6px;
+}
+
+.recipientBox {
+  width: 100%;
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+
+.recipientRow {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #5F6783;
+  text-align: center;
+  flex-wrap: wrap;
+}
+
+.recipientRowEditing {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.recipientEditHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: #8b93ac;
+}
+
+.recipientAddr {
+  color: #8b93ac;
+  font-family: monospace;
+}
+
+.recipientToggle {
+  color: #ff2ee6;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.recipientToggle:hover {
+  text-decoration: underline;
+}
+
+.recipientError {
+  color: #e5484d;
+  font-size: 12px;
+}
+
+.balanceRow {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: #8b93ac;
+  margin-top: 10px;
+  margin-bottom: 6px;
+}
+
+.maxBtn {
+  background: linear-gradient(90deg, rgba(0, 217, 255, 0.2), rgba(255, 46, 230, 0.2));
+  color: #7df9ff;
+  font-weight: 700;
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 100px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.maxBtn:hover {
+  background: linear-gradient(90deg, rgba(0, 217, 255, 0.4), rgba(255, 46, 230, 0.4));
+  color: white;
+}
+
+.quickAmountRow {
+  width: 100%;
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.quickAmountBtn {
+  flex: 1;
+  text-align: center;
+  background: #17171f;
+  border: 1px solid #21273a;
+  color: #8b93ac;
+  font-weight: 700;
+  font-size: 11px;
+  padding: 6px 0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.quickAmountBtn:hover {
+  background: linear-gradient(90deg, rgba(0, 217, 255, 0.2), rgba(255, 46, 230, 0.2));
+  border-color: rgba(255, 46, 230, 0.4);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(255, 46, 230, 0.18);
+}
+
+.chartBox {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  width: 480px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid transparent;
+  border-radius: 20px;
+  padding: 22px 22px 12px;
+  margin-top: 20px;
+  box-sizing: border-box;
+  transition: box-shadow 0.4s ease, transform 0.15s ease-out;
+  animation: fadeInUp 0.55s ease 0.12s both, borderFlow 8s ease infinite 0.67s;
+  will-change: transform;
+  /* Same always-on flowing gradient border as the Swap trade box, instead
+     of a flat single-color border that only lights up on hover. */
+  background:
+    linear-gradient(rgba(15, 18, 33, 0.82), rgba(15, 18, 33, 0.82)) padding-box,
+    linear-gradient(135deg, rgba(255, 46, 230, 0.65), rgba(0, 217, 255, 0.55), rgba(255, 46, 230, 0.65)) border-box;
+  background-size: 100% 100%, 220% 220%;
+}
+
+.marketsBox {
+  width: 640px;
+  max-width: 92vw;
+  margin-top: 40px;
+  margin-bottom: 40px;
+}
+
+.marketsSubtitle {
+  margin-bottom: 12px;
+}
+
+.aiChatBox {
+  position: relative;
+  isolation: isolate;
+  width: 480px;
+  max-width: 92vw;
+  height: 540px;
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid transparent;
+  border-radius: 18px;
+  padding: 16px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  box-sizing: border-box;
+  transition: box-shadow 0.4s ease, transform 0.15s ease-out;
+  animation: fadeInUp 0.55s ease both, borderFlow 8s ease infinite 0.55s;
+  overflow: hidden;
+  will-change: transform;
+  /* Same always-on flowing gradient border as every other main card, instead
+     of only shimmering on hover. */
+  background:
+    linear-gradient(rgba(15, 18, 33, 0.82), rgba(15, 18, 33, 0.82)) padding-box,
+    linear-gradient(135deg, rgba(0, 217, 255, 0.6), rgba(255, 46, 230, 0.55), rgba(0, 217, 255, 0.6)) border-box;
+  background-size: 100% 100%, 220% 220%;
+}
+
+.aiChatBox:hover {
+  box-shadow: 0 20px 60px rgba(0, 217, 255, 0.2), 0 10px 30px rgba(255, 46, 230, 0.16);
+}
+
+.aiChatHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  flex-shrink: 0;
+}
+
+.aiChatHeaderIconWrap {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(0, 217, 255, 0.22), rgba(255, 46, 230, 0.22));
+  border: 1px solid rgba(0, 217, 255, 0.35);
+}
+
+.aiChatHeaderIcon {
+  font-size: 19px;
+  color: #00d9ff;
+  flex-shrink: 0;
+}
+
+.aiChatHeader h4 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: -0.1px;
+  background: linear-gradient(90deg, #00d9ff, #ff2ee6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.aiSubtitle {
+  font-size: 11px;
+  color: #5F6783;
+}
+
+.aiChatMessages {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 4px 8px;
+}
+
+.aiMsgRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  justify-content: flex-start;
+  animation: fadeInUp 0.3s ease both;
+}
+
+.aiMsgRowUser {
+  justify-content: flex-end;
+}
+
+.aiMsgAvatar {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  background: linear-gradient(135deg, rgba(0, 217, 255, 0.22), rgba(255, 46, 230, 0.22));
+  border: 1px solid rgba(0, 217, 255, 0.3);
+  color: #00d9ff;
+}
+
+.aiMsgAvatarUser {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: #21273a;
+  color: #8b93ac;
+}
+
+.aiMsgBubble {
+  max-width: 76%;
+  background: #17171f;
+  border: 1px solid #21273a;
+  border-radius: 14px 14px 14px 4px;
+  padding: 8px 12px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #d8dcef;
+}
+
+.aiMsgBubbleUser {
+  background: rgba(0, 217, 255, 0.16);
+  border-color: rgba(0, 217, 255, 0.4);
+  border-radius: 14px 14px 4px 14px;
+  color: white;
+}
+
+.aiModeTabs {
+  width: fit-content;
+  margin-bottom: 14px;
+}
+
+.aiModeTab {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.aiModeTabIcon {
+  font-size: 12px;
+}
+
+.aiDisclaimer {
+  font-size: 11px;
+  color: #ffb648;
+  background: rgba(255, 182, 72, 0.1);
+  border: 1px solid rgba(255, 182, 72, 0.3);
+  border-radius: 10px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+
+.aiOfflineTag {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: #ffb648;
+  background: rgba(255, 182, 72, 0.14);
+  border: 1px solid rgba(255, 182, 72, 0.4);
+  padding: 2px 8px;
+  border-radius: 100px;
+  margin-bottom: 6px;
+}
+
+.aiTypingBubble {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 16px;
+}
+
+.aiTypingDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #5F6783;
+  animation: aiTypingPulse 1.2s infinite ease-in-out;
+}
+
+.aiTypingDot:nth-child(2) { animation-delay: 0.15s; }
+.aiTypingDot:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes aiTypingPulse {
+  0%, 60%, 100% { opacity: 0.3; transform: scale(0.85); }
+  30% { opacity: 1; transform: scale(1); }
+}
+
+.aiSuggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px 0;
+  flex-shrink: 0;
+}
+
+.aiSuggestionChip {
+  font-size: 11px;
+  color: #8b93ac;
+  background: #17171f;
+  border: 1px solid #21273a;
+  padding: 5px 11px;
+  border-radius: 100px;
+  cursor: pointer;
+  transition: 0.2s ease;
+  white-space: nowrap;
+}
+
+.aiSuggestionChip:hover {
+  background: linear-gradient(90deg, rgba(0, 217, 255, 0.15), rgba(255, 46, 230, 0.15));
+  border-color: rgba(0, 217, 255, 0.4);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(0, 217, 255, 0.16);
+}
+
+.aiChatInputRow {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.aiChatInput {
+  flex: 1;
+  background-color: #17171f;
+  border: 1px solid #21273a;
+  color: white;
+  border-radius: 100px;
+  padding: 11px 18px;
+  font-size: 13px;
+  font-family: var(--font-body);
+  outline: none;
+  transition: 0.2s ease;
+}
+
+.aiChatInput:focus {
+  border-color: rgba(0, 217, 255, 0.5);
+  background-color: #20202a;
+}
+
+.aiChatInput::placeholder {
+  color: #5F6783;
+}
+
+.aiChatSendBtn {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(90deg, #00d9ff, #ff2ee6);
+  border: none;
+  color: #08080c;
+  font-size: 16px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.aiChatSendBtn:hover {
+  filter: brightness(1.1);
+  transform: scale(1.05);
+}
+
+.aiChatSendBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  filter: none;
+  transform: none;
+}
+
+.chartBox:hover {
+  box-shadow: 0 20px 60px rgba(0, 217, 255, 0.16), 0 10px 30px rgba(255, 46, 230, 0.2);
+}
+
+.chartTitleRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 14px;
+}
+
+.chartTitle {
+  font-size: 13px;
+  color: #8b93ac;
+  font-weight: 500;
+}
+
+.chartTrend {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.chartTrendUp {
+  color: #35e39a;
+}
+
+.chartTrendDown {
+  color: #ff5c7a;
+}
+
+.swapPageColumn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.tokenChoiceDisabled {
+  opacity: 0.4;
+  cursor: not-allowed !important;
+  position: relative;
+}
+
+.tokenChoiceDisabled:hover {
+  background-color: transparent !important;
+  padding-left: 20px !important;
+}
+
+.testnetBadge {
+  margin-left: auto;
+  margin-right: 20px;
+  font-size: 10px;
+  color: #8b93ac;
+  background: rgba(255, 46, 230, 0.15);
+  padding: 3px 8px;
+  border-radius: 100px;
+  white-space: nowrap;
+}
+
+.tokensPage {
+  width: 500px;
+  max-width: 90vw;
+  margin: 40px auto;
+  background: rgba(15, 18, 33, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 46, 230, 0.25);
+  border-radius: 20px;
+  padding: 20px 24px;
+  box-sizing: border-box;
+  color: white;
+  transition: box-shadow 0.4s ease, border-color 0.4s ease;
+  animation: fadeInUp 0.55s ease both;
+}
+
+.tokensPage:hover {
+  border-color: rgba(255, 46, 230, 0.45);
+  box-shadow: 0 20px 60px rgba(0, 217, 255, 0.12), 0 10px 30px rgba(255, 46, 230, 0.16);
+}
+
+.tokensHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.tokensHeader h4 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 19px;
+  letter-spacing: -0.2px;
+}
+
+.tokensRefresh {
+  font-size: 13px;
+  color: #8b93ac;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.tokensRefresh:hover {
+  color: white;
+}
+
+.tokensEmpty {
+  color: #8b93ac;
+  font-size: 14px;
+  padding: 30px 0;
+  text-align: center;
+}
+
+.tokensTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.tokensTable th {
+  text-align: left;
+  color: #5F6783;
+  font-weight: normal;
+  font-size: 12px;
+  padding: 8px 6px;
+  border-bottom: 1px solid #1c1c24;
+}
+
+.tokensTable td {
+  padding: 10px 6px;
+  border-bottom: 1px solid #1c1c24;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.tokensTable tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+.tokensTable tbody tr:hover {
+  background-color: rgba(255, 46, 230, 0.08);
+}
+
+.tokensTable a {
+  color: #ff2ee6;
+  text-decoration: none;
+}
+
+.tokensTable a:hover {
+  text-decoration: underline;
+}
+
+.tokensRowLogo {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+
+.txList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.txRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  padding: 12px 14px;
+  transition: transform 0.15s ease-out, box-shadow 0.3s ease;
+  will-change: transform;
+  /* Subtle static gradient border (same cyan/magenta pair as the main
+     cards) instead of a flat grey border that only lights up on hover. */
+  background:
+    linear-gradient(#17171f, #17171f) padding-box,
+    linear-gradient(135deg, rgba(0, 217, 255, 0.3), rgba(255, 46, 230, 0.3)) border-box;
+}
+
+.txRow:hover {
+  box-shadow: 0 8px 24px rgba(255, 46, 230, 0.14);
+}
+
+.txPairIcons {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.txRowLogo {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid #17171f;
+  background: #0c0c10;
+}
+
+.txRowLogoOverlap {
+  margin-left: -10px;
+}
+
+.txRowInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.txRowPair {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.txRowArrow {
+  font-size: 11px;
+  color: #8b93ac;
+}
+
+.txRowAmounts {
+  font-size: 12px;
+  color: #8b93ac;
+  margin-top: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.txRowRecipient {
+  font-size: 10px;
+  color: #ffb648;
+  margin-top: 3px;
+  font-family: var(--font-mono, monospace);
+}
+
+.txRowMeta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.txStatusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #35e39a;
+  background: rgba(53, 227, 154, 0.12);
+  border: 1px solid rgba(53, 227, 154, 0.35);
+  padding: 2px 9px;
+  border-radius: 100px;
+  white-space: nowrap;
+}
+
+.txRowTime {
+  font-size: 11px;
+  color: #5F6783;
+  white-space: nowrap;
+}
+
+.txViewBtn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+  text-decoration: none;
+  background: linear-gradient(90deg, rgba(0, 217, 255, 0.18), rgba(255, 46, 230, 0.18));
+  border: 1px solid rgba(255, 46, 230, 0.4);
+  white-space: nowrap;
+  transition: 0.2s ease;
+}
+
+.txViewBtn:hover {
+  background: linear-gradient(90deg, rgba(0, 217, 255, 0.35), rgba(255, 46, 230, 0.35));
+}
+
+.wrapBox {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  width: 480px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid transparent;
+  border-radius: 20px;
+  padding: 20px;
+  margin-top: 20px;
+  box-sizing: border-box;
+  transition: box-shadow 0.4s ease, transform 0.15s ease-out;
+  animation: fadeInUp 0.55s ease both, borderFlow 8s ease infinite 0.55s;
+  will-change: transform;
+  background:
+    linear-gradient(rgba(15, 18, 33, 0.82), rgba(15, 18, 33, 0.82)) padding-box,
+    linear-gradient(135deg, rgba(255, 46, 230, 0.65), rgba(0, 217, 255, 0.55), rgba(255, 46, 230, 0.65)) border-box;
+  background-size: 100% 100%, 220% 220%;
+}
+
+.wrapBox:hover {
+  box-shadow: 0 20px 60px rgba(0, 217, 255, 0.16), 0 10px 30px rgba(255, 46, 230, 0.2);
+}
+
+.wrapHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.wrapHeader h4 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: -0.1px;
+}
+
+.wrapTabs {
+  display: flex;
+  gap: 4px;
+  background: #17171f;
+  border-radius: 100px;
+  padding: 3px;
+}
+
+.chartRangeTabs {
+  width: fit-content;
+  margin-bottom: 14px;
+}
+
+.wrapTab {
+  font-size: 11px;
+  font-weight: 600;
+  color: #8b93ac;
+  padding: 5px 10px;
+  border-radius: 100px;
+  cursor: pointer;
+  transition: 0.2s ease;
+  white-space: nowrap;
+}
+
+.wrapTab:hover {
+  color: white;
+  transform: translateY(-1px);
+}
+
+.wrapTabActive {
+  background: linear-gradient(90deg, rgba(0, 217, 255, 0.35), rgba(255, 46, 230, 0.35));
+  color: white;
+}
+
+.wrapButton {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 46px;
+  font-size: 15px;
+  border-radius: 12px;
+  color: white;
+  font-weight: 700;
+  font-family: var(--font-display);
+  background: linear-gradient(90deg, #00d9ff 0%, #67e8f9 100%);
+  border: none;
+  outline: none;
+  cursor: pointer;
+  transition: 0.25s ease;
+  margin-top: 4px;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 16px rgba(0, 217, 255, 0.3);
+}
+
+.wrapButton:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.wrapButton:active {
+  transform: translateY(0px);
+}
+
+.wrapButton[disabled] {
+  background: #243056;
+  opacity: 0.4;
+  color: #5982f39b;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.wrapNote {
+  font-size: 11px;
+  color: #5F6783;
+  line-height: 1.5;
+}
+
+.reviewContent {
+  padding: 20px 24px 24px;
+}
+
+.reviewRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  color: #8b93ac;
+  padding: 9px 0;
+  border-bottom: 1px solid #1c1c24;
+  font-variant-numeric: tabular-nums;
+}
+
+.reviewRow:last-of-type {
+  border-bottom: none;
+}
+
+.reviewRow span:last-child {
+  color: white;
+  font-weight: 600;
+}
+
+.reviewImpactHigh {
+  color: #e5484d !important;
+}
+
+.reviewWarning {
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: rgba(229, 72, 77, 0.12);
+  border: 1px solid rgba(229, 72, 77, 0.35);
+  border-radius: 10px;
+  color: #ff8a8f;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.faucetsPage {
+  padding-bottom: 24px;
+}
+
+.faucetsIntro {
+  text-align: left;
+  padding: 0 0 16px;
+}
+
+.faucetList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.faucetCard {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  padding: 14px 16px;
+  transition: transform 0.15s ease-out, box-shadow 0.3s ease;
+  will-change: transform;
+  /* Faucets get their own green/teal accent instead of the standard
+     cyan/magenta - "free tokens" reads as a distinct, positive action. */
+  background:
+    linear-gradient(#17171f, #17171f) padding-box,
+    linear-gradient(135deg, rgba(0, 230, 160, 0.35), rgba(0, 217, 255, 0.3)) border-box;
+}
+
+.faucetCard:hover {
+  box-shadow: 0 8px 24px rgba(0, 230, 160, 0.16);
+}
+
+.faucetCardTitle {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 15px;
+  margin-bottom: 4px;
+}
+
+.faucetCardDesc {
+  font-size: 12px;
+  color: #8b93ac;
+  line-height: 1.5;
+}
+
+.faucetBtn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 16px;
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 600;
+  color: white;
+  text-decoration: none;
+  background: linear-gradient(90deg, rgba(0, 230, 160, 0.2), rgba(0, 217, 255, 0.18));
+  border: 1px solid rgba(0, 230, 160, 0.45);
+  white-space: nowrap;
+  transition: 0.2s ease;
+}
+
+.faucetBtn:hover {
+  background: linear-gradient(90deg, rgba(0, 230, 160, 0.4), rgba(0, 217, 255, 0.35));
+  color: white;
+}
+
+.reviewContent .swapButton {
+  margin-top: 18px;
+  margin-bottom: 4px;
+}
+
+.walletPage {
+  width: 480px;
+  padding-bottom: 24px;
+}
+
+.walletConnectedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #35e39a;
+  background: rgba(53, 227, 154, 0.12);
+  border: 1px solid rgba(53, 227, 154, 0.35);
+  padding: 4px 10px;
+  border-radius: 100px;
+}
+
+.walletDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #35e39a;
+  box-shadow: 0 0 6px rgba(53, 227, 154, 0.8);
+}
+
+.walletAddressRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  transition: transform 0.15s ease-out, box-shadow 0.3s ease;
+  will-change: transform;
+  /* Wallet gets its own violet/purple accent instead of the standard
+     cyan/magenta - reads as a distinct "vault" section from Swap/Chart. */
+  background:
+    linear-gradient(#17171f, #17171f) padding-box,
+    linear-gradient(135deg, rgba(168, 85, 247, 0.35), rgba(255, 46, 230, 0.25)) border-box;
+}
+
+.walletAddressRow:hover {
+  box-shadow: 0 8px 24px rgba(168, 85, 247, 0.18);
+}
+
+.walletAddressFull {
+  font-family: var(--font-display);
+  font-size: 13px;
+  color: #d8dcef;
+  word-break: break-all;
+}
+
+.walletCopyBtn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, rgba(168, 85, 247, 0.16), rgba(255, 46, 230, 0.12));
+  color: #d9a8ff;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.walletCopyBtn:hover {
+  background: linear-gradient(90deg, rgba(168, 85, 247, 0.35), rgba(255, 46, 230, 0.3));
+  color: white;
+}
+
+.walletNetworkRow {
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  color: #8b93ac;
+  margin-bottom: 18px;
+}
+
+.walletStatsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.walletStatCard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  padding: 14px;
+  transition: transform 0.15s ease-out, box-shadow 0.3s ease;
+  will-change: transform;
+  /* --statBorder/--statGlow are set inline per card (see Wallet.js) so each
+     stat card gets its own accent instead of every card looking identical -
+     falls back to the page's default violet if not set. */
+  background:
+    linear-gradient(#17171f, #17171f) padding-box,
+    linear-gradient(135deg, var(--statBorder, rgba(168, 85, 247, 0.35)), rgba(255, 46, 230, 0.22)) border-box;
+}
+
+.walletStatCard:hover {
+  box-shadow: 0 8px 24px var(--statGlow, rgba(168, 85, 247, 0.18));
+}
+
+.walletStatIcon {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.walletStatLabel {
+  font-size: 11px;
+  color: #8b93ac;
+  margin-bottom: 3px;
+}
+
+.walletStatValue {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.walletDisconnectBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 46px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: var(--font-display);
+  color: #ff8a8f;
+  background: rgba(229, 72, 77, 0.1);
+  border: 1px solid rgba(229, 72, 77, 0.35);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.walletDisconnectBtn:hover {
+  background: rgba(229, 72, 77, 0.22);
+  color: white;
+}
+
+/* Post-swap "Download Receipt" prompt - a small card, on-screen only. */
+.receiptPrompt {
+  width: 480px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  background: rgba(53, 227, 154, 0.1);
+  border: 1px solid rgba(53, 227, 154, 0.4);
+  border-radius: 16px;
+  padding: 14px 18px;
+  margin-top: 20px;
+  box-sizing: border-box;
+  animation: fadeInUp 0.4s ease both;
+}
+
+.receiptPromptText {
+  font-size: 13px;
+  color: #d8dcef;
+}
+
+.receiptPromptText strong {
+  color: #35e39a;
+}
+
+.receiptDownloadBtn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 600;
+  color: white;
+  background: rgba(53, 227, 154, 0.2);
+  border: 1px solid rgba(53, 227, 154, 0.5);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: 0.2s ease;
+}
+
+.receiptDownloadBtn:hover {
+  background: rgba(53, 227, 154, 0.4);
+}
+
+/* The receipt itself is invisible on screen - it only renders for print,
+   via window.print(), and every browser's print dialog can "Save as PDF"
+   as the destination printer. Everything else on the page is hidden while
+   printing so only the receipt sheet ends up on the page/PDF. */
+.receiptPrintOnly {
+  display: none;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .receiptPrintOnly,
+  .receiptPrintOnly * {
+    visibility: visible;
+  }
+  .receiptPrintOnly {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+  }
+}
+
+.receiptSheet {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 32px;
+  background: #ffffff;
+  color: #1a1a1a;
+  font-family: Arial, Helvetica, sans-serif;
+  box-sizing: border-box;
+}
+
+.receiptBrand {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.receiptTitle {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 20px;
+}
+
+.receiptRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 12px;
+  padding: 6px 0;
+}
+
+.receiptRow span:first-child {
+  color: #666;
+}
+
+.receiptMono {
+  font-family: "Courier New", monospace;
+  word-break: break-all;
+  text-align: right;
+  max-width: 300px;
+}
+
+.receiptDivider {
+  border-top: 1px solid #ddd;
+  margin: 12px 0;
+}
+
+.receiptFooter {
+  margin-top: 20px;
+  font-size: 10px;
+  color: #999;
+  word-break: break-all;
+}
+
+/* ==========================================================================
+   Toast notifications - restyles antd's <message> popups only (the .ant-*
+   class names below are the library's own stable DOM hooks, not something
+   this app renders). Every message.success/error/info/warning(...) call
+   already used across Swap.js, Wallet.js and WrapEth.js is untouched - this
+   is pure CSS, so all 28 existing call sites keep working exactly as before,
+   just wrapped in a nicer-looking glassmorphic neon toast instead of antd's
+   plain default box. */
+.ant-message {
+  top: 100px !important;
+}
+
+.ant-message-notice {
+  animation: toastSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.ant-message-notice-content {
+  background: rgba(15, 18, 33, 0.85) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 217, 255, 0.25);
+  border-radius: 14px !important;
+  padding: 12px 20px !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.03) inset;
+}
+
+.ant-message-custom-content {
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  color: #d8dcef;
+}
+
+.ant-message-custom-content .anticon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.ant-message-success {
+  border-color: rgba(0, 230, 160, 0.35) !important;
+  box-shadow: 0 12px 40px rgba(0, 230, 160, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.03) inset !important;
+}
+
+.ant-message-success .anticon {
+  color: #00e6a0;
+}
+
+.ant-message-error {
+  border-color: rgba(255, 46, 110, 0.35) !important;
+  box-shadow: 0 12px 40px rgba(255, 46, 110, 0.14), 0 0 0 1px rgba(255, 255, 255, 0.03) inset !important;
+}
+
+.ant-message-error .anticon {
+  color: #ff2e6e;
+}
+
+.ant-message-info {
+  border-color: rgba(0, 217, 255, 0.35) !important;
+  box-shadow: 0 12px 40px rgba(0, 217, 255, 0.14), 0 0 0 1px rgba(255, 255, 255, 0.03) inset !important;
+}
+
+.ant-message-info .anticon {
+  color: #00d9ff;
+}
+
+.ant-message-warning {
+  border-color: rgba(255, 182, 72, 0.35) !important;
+  box-shadow: 0 12px 40px rgba(255, 182, 72, 0.14), 0 0 0 1px rgba(255, 255, 255, 0.03) inset !important;
+}
+
+.ant-message-warning .anticon {
+  color: #ffb648;
+}
+
+.ant-message-loading .anticon {
+  color: #ff2ee6;
+}
+
+@keyframes toastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-16px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
