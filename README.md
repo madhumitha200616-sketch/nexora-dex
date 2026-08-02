@@ -1,43 +1,66 @@
 # Nexora DEX
 
-A decentralized exchange (DEX) built on the Ethereum Sepolia testnet — swap tokens, track live balances, view transaction history, and get help from a built-in AI assistant scoped to blockchain/Web3 topics.
+A full-featured decentralized exchange (DEX) built on the Ethereum Sepolia testnet, with a real-time wallet dashboard, transaction history, price charts, and a built-in AI assistant for Web3 questions. Built as a portfolio project to demonstrate end-to-end DApp development — smart contract interaction, wallet integration, and production-style frontend engineering.
+
+**Live demo:** _add your Vercel URL here after deploying_
+**Video walkthrough:** _optional — add a Loom/YouTube link here_
+
+## Why this project
+
+Most DEX tutorials stop at "connect wallet, swap tokens." Nexora goes further: real transaction history reconstructed from on-chain logs (including swaps sent to a custom recipient address), retry-safe RPC calls with timeouts, exact-amount token approvals instead of unlimited allowances, and an AI assistant that's actually useful instead of a gimmick. Every feature here was built to solve a real problem that came up during development, not just to check a box.
 
 ## Features
 
-- Token swaps via Uniswap V3 (Sepolia) with live price quotes and slippage protection
-- Wrap/unwrap ETH ⇄ WETH
-- Wallet dashboard with live balances (ETH, WETH, USDC, LINK)
-- Transaction history with on-chain swap detection, including custom-recipient swaps
-- Live price chart (24h / 7d / 30d)
-- Testnet token faucets
-- AI Assistant with 3 modes: Blockchain Assistant, Error Explanation, and Swap Advisor (powered by Google Gemini)
+- **Token swaps** via Uniswap V3 on Sepolia — live price quotes, slippage protection, and a swap confirmation modal before anything executes
+- **Exact-amount approvals** — approves only what's needed per swap instead of an unlimited spending cap, so MetaMask never shows a scary "Unlimited" warning
+- **Wrap / unwrap ETH ⇄ WETH** on its own dedicated page
+- **Wallet dashboard** — live ETH + token balances (WETH, USDC, LINK), each with its own accent color, gas availability, and one-click address copy
+- **Transaction history** — reconstructed directly from on-chain Transfer events, with a fallback that parses raw transaction receipts to correctly detect swaps sent to a different recipient address
+- **Live price chart** with 24h / 7d / 30d toggle
+- **Testnet faucets** page for getting test tokens
+- **AI Assistant**, three modes sharing one Gemini-backed endpoint:
+  - **Blockchain Assistant** — answers general Web3/blockchain questions, politely declines anything off-topic
+  - **Error Explanation** — paste a MetaMask/console error, get a plain-English explanation and fix
+  - **Swap Advisor** — educational guidance on slippage, gas, and trade mechanics (no financial advice)
 
 ## Tech Stack
 
-- **Frontend:** React, ethers.js, wagmi, antd, recharts
-- **Backend:** Express (price + AI proxy endpoints)
-- **Chain:** Ethereum Sepolia testnet
-- **AI:** Google Gemini API
+| Layer | Tech |
+|---|---|
+| Frontend | React 18, ethers.js v5, wagmi, antd, recharts |
+| Backend | Node.js, Express |
+| Blockchain | Ethereum Sepolia testnet, Uniswap V3 |
+| AI | Google Gemini API |
+| Deployment | Vercel (frontend), Render (backend) |
 
 ## Project Structure
 
-- `dex/` — React frontend
-- `dexBack/` — Express backend (token prices, price history, AI assistant proxy)
+```
+dexStarter/
+├── dex/        # React frontend
+└── dexBack/    # Express backend — token prices, price history, AI assistant proxy
+```
 
 ## Running Locally
 
-Backend:
-```
+**Backend:**
+```bash
 cd dexBack
 npm install
-cp .env.example .env   # fill in your API keys
+cp .env.example .env   # add your GEMINI_API_KEY and COINGECKO_API_KEY
 npm start
 ```
 
-Frontend:
-```
+**Frontend** (in a separate terminal):
+```bash
 cd dex
 npm install
-cp .env.example .env   # fill in your RPC URL
+cp .env.example .env   # add your Sepolia RPC URL (Infura/Alchemy/public RPC)
 npm start
 ```
+
+The app runs at `http://localhost:3000`, backend at `http://localhost:3001`.
+
+## Notes
+
+This runs entirely on Sepolia testnet — all tokens are testnet tokens with no real value, obtainable free from the in-app Faucets page. Built for demonstration and learning purposes.
