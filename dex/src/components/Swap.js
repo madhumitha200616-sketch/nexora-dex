@@ -10,7 +10,6 @@ import axios from "axios";
 import { ethers } from "ethers";
 
 import tokenList from "../tokenList.json";
-import { handleTiltMove, handleTiltLeave } from "../tiltEffect";
 import Receipt from "./Receipt";
 import { API_BASE_URL } from "../apiConfig";
 

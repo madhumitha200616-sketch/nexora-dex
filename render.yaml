@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: nexora-dex-backend
+    runtime: node
+    rootDir: dexBack
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: COINGECKO_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        sync: false
