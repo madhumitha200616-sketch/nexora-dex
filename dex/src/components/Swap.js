@@ -87,6 +87,12 @@ function Swap({ isConnected, address }) {
   // Live "you'll pay roughly this much gas" figure, in ETH - refreshed
   // alongside the real on-chain quote (see fetchQuote/fetchGasEstimate).
   const [estimatedGasFee, setEstimatedGasFee] = useState(null);
+  // Live price impact estimate, refreshed alongside the quote (same ref-vs-
+  // real-amount technique used in openReviewModal) - shown inline under the
+  // amount field so a bad-liquidity trade is visible WHILE typing, instead
+  // of only surfacing after clicking "Review Swap". Null until a quote with
+  // a resolvable reference rate has come back.
+  const [livePriceImpactPct, setLivePriceImpactPct] = useState(null);
   // Recipient of the swapped output tokens. Always editable - pre-filled
   // with your own wallet, but you can change it to anyone's address before
   // swapping. No toggle needed: it's just a normal field that happens to
@@ -164,6 +170,7 @@ function Swap({ isConnected, address }) {
 
     async function detectPool() {
       setPoolInfo(null);
+      setLivePriceImpactPct(null); // stale reading from the old pair shouldn't linger
       if (!tokenOne.sepoliaAddress || !tokenTwo.sepoliaAddress) return;
 
       try {
@@ -230,6 +237,11 @@ function Swap({ isConnected, address }) {
           const provider = new ethers.providers.JsonRpcProvider(process.env.REACT_APP_INFURA_URL);
           const quoter = new ethers.Contract(QUOTER_ADDRESS, QUOTER_ABI, provider);
           const amountIn = ethers.utils.parseUnits(value, tokenOne.decimals);
+          // Tiny reference amount (~no price impact) used to estimate impact
+          // on the REAL amount below - same technique as openReviewModal, just
+          // surfaced here too so a bad-liquidity trade is visible while you're
+          // still typing, not only after opening the Review Swap modal.
+          const refAmountIn = ethers.utils.parseUnits("0.0001", tokenOne.decimals);
 
           // QuoterV2 takes a struct and returns a tuple - only the first
           // value (amountOut) is what we need here. The gas-price lookup
@@ -237,7 +249,7 @@ function Swap({ isConnected, address }) {
           // Promise.all - it's not needed on every silent 3s tick, only on
           // the real debounced quote, so it doesn't add extra RPC traffic
           // for something that barely moves that often.
-          const [result] = await Promise.all([
+          const [result, refResult] = await Promise.all([
             quoter.callStatic.quoteExactInputSingle({
               tokenIn: tokenOne.sepoliaAddress,
               tokenOut: tokenTwo.sepoliaAddress,
@@ -245,11 +257,31 @@ function Swap({ isConnected, address }) {
               fee: poolInfo.fee,
               sqrtPriceLimitX96: 0,
             }),
+            quoter.callStatic.quoteExactInputSingle({
+              tokenIn: tokenOne.sepoliaAddress,
+              tokenOut: tokenTwo.sepoliaAddress,
+              amountIn: refAmountIn,
+              fee: poolInfo.fee,
+              sqrtPriceLimitX96: 0,
+            }).catch(() => null),
             !silent ? fetchGasEstimate(provider) : Promise.resolve(),
           ]);
           const amountOut = result.amountOut ?? result[0];
 
           settokenTwoAmount(ethers.utils.formatUnits(amountOut, tokenTwo.decimals));
+
+          if (refResult) {
+            const refAmountOut = refResult.amountOut ?? refResult[0];
+            if (!refAmountOut.isZero()) {
+              const idealOut = refAmountOut.mul(amountIn).div(refAmountIn);
+              if (!idealOut.isZero()) {
+                const diff = idealOut.sub(amountOut);
+                setLivePriceImpactPct((diff.mul(1000000).div(idealOut).toNumber()) / 10000);
+              }
+            }
+          } else {
+            setLivePriceImpactPct(null);
+          }
           return;
         } catch (err) {
           console.error("On-chain quote failed, falling back to price ratio:", err);
@@ -260,6 +292,7 @@ function Swap({ isConnected, address }) {
       // Kept prefixed with "~" since, unlike the on-chain branch above, this
       // number is never exact - there's no real Sepolia pool for this pair
       // to simulate against, so this estimate IS the final answer.
+      setLivePriceImpactPct(null);
       if (prices) {
         settokenTwoAmount(`~${(value * prices.ratio).toFixed(6)}`);
       } else {
@@ -299,6 +332,7 @@ function Swap({ isConnected, address }) {
     if (!value) {
       settokenTwoAmount(null);
       setIsQuoting(false);
+      setLivePriceImpactPct(null);
       return;
     }
 
@@ -914,6 +948,14 @@ setTimeout(() => setShowSwapSuccess(false), 2200);
        {!isQuoting && estimatedGasFee !== null && (
          <div className="gasEstimateRow">
            <ThunderboltOutlined /> Estimated gas: ~{Number(estimatedGasFee).toFixed(6)} ETH
+         </div>
+       )}
+       {!isQuoting && livePriceImpactPct !== null && livePriceImpactPct > 1 && (
+         <div className={livePriceImpactPct > 5 ? "priceImpactWarnRow priceImpactWarnHigh" : "priceImpactWarnRow"}>
+           Price impact: -{livePriceImpactPct.toFixed(2)}%
+           {livePriceImpactPct > 5
+             ? " — this testnet pool is thin at this size, try a smaller amount"
+             : " — noticeable for this size on testnet liquidity"}
          </div>
        )}
        <div

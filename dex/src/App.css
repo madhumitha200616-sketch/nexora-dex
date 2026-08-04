@@ -654,6 +654,23 @@ header {
   margin-bottom: 6px;
 }
 
+/* Shown under the amount field, live, whenever the current typed amount
+   would eat noticeably into this testnet pool's thin liquidity - lets you
+   catch a bad-liquidity trade WHILE typing instead of only after opening
+   the Review Swap modal (which also has its own copy of this warning). */
+.priceImpactWarnRow {
+  width: 100%;
+  font-size: 12px;
+  color: #ffb648;
+  margin-top: -2px;
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+
+.priceImpactWarnHigh {
+  color: #e5484d;
+}
+
 .recipientBox {
   width: 100%;
   margin-top: 4px;
