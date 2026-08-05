@@ -77,12 +77,28 @@ async function queryFilterChunked(contract, filter, fromBlock, toBlock) {
   return chunkResults.flat();
 }
 
+const POOL_LIQUIDITY_ABI = ["function liquidity() external view returns (uint128)"];
+
+// Matches Swap.js's detectPool exactly: a fee tier only counts if a pool
+// contract actually exists there AND it already has some liquidity in it.
+// Without the liquidity check, this could return a real-but-empty pool at
+// an earlier fee tier while Swap.js's quotes are running against a
+// DIFFERENT (later) fee tier that actually has depth - meaning liquidity
+// added here would go into a pool nobody's swap history ever touches.
 async function findPoolFee(provider, tokenA, tokenB) {
   const factory = new ethers.Contract(FACTORY_ADDRESS, FACTORY_ABI, provider);
   for (const fee of FEE_TIERS) {
     const pool = await factory.getPool(tokenA, tokenB, fee);
     if (pool && pool !== ethers.constants.AddressZero) {
-      return { fee, poolAddress: pool };
+      const poolContract = new ethers.Contract(pool, POOL_LIQUIDITY_ABI, provider);
+      const liquidity = await poolContract.liquidity();
+      if (!liquidity.eq(0)) {
+        return { fee, poolAddress: pool };
+      }
+      // Exists but empty - same as Swap.js, don't fall through to the next
+      // tier automatically, since that could silently pick a pool the rest
+      // of the app was never actually using either.
+      return null;
     }
   }
   return null;
