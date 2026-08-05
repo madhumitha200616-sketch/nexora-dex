@@ -671,6 +671,17 @@ header {
   color: #e5484d;
 }
 
+.priceImpactShrinkLink {
+  text-decoration: underline;
+  cursor: pointer;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.priceImpactShrinkLink:hover {
+  opacity: 0.8;
+}
+
 .recipientBox {
   width: 100%;
   margin-top: 4px;
@@ -1499,6 +1510,17 @@ header {
   font-size: 11px;
   color: #5F6783;
   line-height: 1.5;
+}
+
+.poolNote {
+  font-size: 12px;
+  color: #5F6783;
+  line-height: 1.5;
+  margin-bottom: 10px;
+}
+
+.poolNoteWarn {
+  color: #e5484d;
 }
 
 .reviewContent {

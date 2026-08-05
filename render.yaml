@@ -9,7 +9,3 @@ services:
     envVars:
       - key: COINGECKO_API_KEY
         sync: false
-      - key: GEMINI_API_KEY
-        sync: false
-      - key: GEMINI_MODEL
-        sync: false

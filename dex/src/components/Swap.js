@@ -448,6 +448,29 @@ function setMaxAmount() {
   }
 }
 
+// One-click "shrink this trade" for the price-impact warning. Not exact -
+// Uniswap V3's concentrated liquidity means impact doesn't scale perfectly
+// linearly with size, so this is a rough starting guess (scaled down further
+// with a 0.7 safety buffer since impact usually grows FASTER than linear as
+// size increases, meaning a pure linear scale-down often isn't quite enough
+// on its own). The real number always comes from the fresh quote fired right
+// after, same as every other amount change - this never fakes a number, it
+// just picks a smarter amount to actually quote next.
+function applySafeAmount() {
+  if (!tokenOneAmount || !livePriceImpactPct || livePriceImpactPct <= 0) return;
+  const targetImpact = 2; // aim comfortably under the "high impact" (>5%) line
+  const scale = Math.min((targetImpact / livePriceImpactPct) * 0.7, 1);
+  const suggested = Number(tokenOneAmount) * scale;
+  if (!(suggested > 0)) return;
+  const rounded = suggested.toFixed(6).replace(/0+$/, "").replace(/\.$/, "");
+
+  settokenOneAmount(rounded);
+  if (quoteTimerRef.current) {
+    clearTimeout(quoteTimerRef.current);
+  }
+  fetchQuote(rounded);
+}
+
 // HALF/25%/50%/75% quick-select buttons - same "deliberate one-off action,
 // skip the debounce" pattern as MAX above, just against a fraction of the
 // current balance instead of all of it.
@@ -954,8 +977,12 @@ setTimeout(() => setShowSwapSuccess(false), 2200);
          <div className={livePriceImpactPct > 5 ? "priceImpactWarnRow priceImpactWarnHigh" : "priceImpactWarnRow"}>
            Price impact: -{livePriceImpactPct.toFixed(2)}%
            {livePriceImpactPct > 5
-             ? " — this testnet pool is thin at this size, try a smaller amount"
-             : " — noticeable for this size on testnet liquidity"}
+             ? " — this testnet pool is thin at this size."
+             : " — noticeable for this size on testnet liquidity."}
+           {" "}
+           <span className="priceImpactShrinkLink" onClick={applySafeAmount}>
+             Try a smaller amount
+           </span>
          </div>
        )}
        <div

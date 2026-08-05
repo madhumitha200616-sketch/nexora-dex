@@ -31,8 +31,8 @@ function Header({ connect, isConnected, address }) {
       <Link to="/wallet" className="link">
        <div className="headerItem">Wallet</div>
       </Link>
-      <Link to="/assistant" className="link">
-       <div className="headerItem">AI Assistant</div>
+      <Link to="/pool" className="link">
+       <div className="headerItem">Pool</div>
       </Link>
     </div>
      <div className="rightH">
