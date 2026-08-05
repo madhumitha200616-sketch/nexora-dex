@@ -44,12 +44,45 @@ const ERC20_ABI = [
   "function balanceOf(address owner) external view returns (uint256)"
 ];
 
+const TRANSFER_ABI = [
+  "event Transfer(address indexed from, address indexed to, uint256 value)"
+];
+
+// Same lookback/chunking/timeout pattern as Tokens.js's transaction history -
+// a liquidity deposit is just a Transfer of tokenA and tokenB INTO the pool
+// contract's own address, so it can be found the exact same way a swap can.
+const BLOCK_LOOKBACK = 20000;
+const CHUNK_SIZE = 5000;
+const REQUEST_TIMEOUT_MS = 15000;
+
+function withTimeout(promise, ms, label) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error(`${label} timed out after ${ms / 1000}s`)), ms)
+    ),
+  ]);
+}
+
+async function queryFilterChunked(contract, filter, fromBlock, toBlock) {
+  const ranges = [];
+  for (let start = fromBlock; start <= toBlock; start += CHUNK_SIZE) {
+    ranges.push([start, Math.min(start + CHUNK_SIZE - 1, toBlock)]);
+  }
+  const chunkResults = await Promise.all(
+    ranges.map(([start, end]) =>
+      withTimeout(contract.queryFilter(filter, start, end), REQUEST_TIMEOUT_MS, "eth_getLogs")
+    )
+  );
+  return chunkResults.flat();
+}
+
 async function findPoolFee(provider, tokenA, tokenB) {
   const factory = new ethers.Contract(FACTORY_ADDRESS, FACTORY_ABI, provider);
   for (const fee of FEE_TIERS) {
     const pool = await factory.getPool(tokenA, tokenB, fee);
     if (pool && pool !== ethers.constants.AddressZero) {
-      return fee;
+      return { fee, poolAddress: pool };
     }
   }
   return null;
@@ -69,25 +102,94 @@ function Pool({ isConnected, address }) {
   const [balanceA, setBalanceA] = useState(null);
   const [balanceB, setBalanceB] = useState(null);
   const [fee, setFee] = useState(null);
+  const [poolAddress, setPoolAddress] = useState(null);
+  const [contributors, setContributors] = useState([]);
+  const [isLoadingContributors, setIsLoadingContributors] = useState(false);
+  const [contributorsError, setContributorsError] = useState(null);
   const [isBusy, setIsBusy] = useState(false);
+  // Bumped after a successful addLiquidity() so the contributors effect
+  // below (keyed on [poolAddress, pair, contributorsRefresh]) re-scans and
+  // picks up the deposit that was just made, without needing poolAddress
+  // itself to actually change.
+  const [contributorsRefresh, setContributorsRefresh] = useState(0);
 
   const pair = PAIRS[pairIndex];
 
   useEffect(() => {
     setFee(null);
+    setPoolAddress(null);
+    setContributors([]);
+    setContributorsError(null);
     if (!pair) return;
     let cancelled = false;
     (async () => {
       try {
         const provider = new ethers.providers.JsonRpcProvider(process.env.REACT_APP_INFURA_URL);
         const detected = await findPoolFee(provider, pair.tokenA.sepoliaAddress, pair.tokenB.sepoliaAddress);
-        if (!cancelled) setFee(detected);
+        if (cancelled) return;
+        if (detected) {
+          setFee(detected.fee);
+          setPoolAddress(detected.poolAddress);
+        }
       } catch (err) {
         console.error("Pool fee detection failed:", err);
       }
     })();
     return () => { cancelled = true; };
   }, [pairIndex]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // "Who's actually put tokens into this pool" - scans for Transfer events
+  // of tokenA/tokenB INTO the pool contract's own address. Adding liquidity
+  // always moves tokens there (via the position manager's transferFrom), so
+  // this catches every deposit regardless of who made it or which app they
+  // used - not just ones made through this page.
+  useEffect(() => {
+    if (!poolAddress || !pair) return;
+    let cancelled = false;
+    setIsLoadingContributors(true);
+    setContributorsError(null);
+    (async () => {
+      try {
+        const provider = new ethers.providers.JsonRpcProvider(process.env.REACT_APP_INFURA_URL);
+        const latestBlock = await withTimeout(provider.getBlockNumber(), REQUEST_TIMEOUT_MS, "getBlockNumber");
+        const fromBlock = Math.max(0, latestBlock - BLOCK_LOOKBACK);
+
+        const contractA = new ethers.Contract(pair.tokenA.sepoliaAddress, TRANSFER_ABI, provider);
+        const contractB = new ethers.Contract(pair.tokenB.sepoliaAddress, TRANSFER_ABI, provider);
+
+        const [depositsA, depositsB] = await Promise.all([
+          queryFilterChunked(contractA, contractA.filters.Transfer(null, poolAddress), fromBlock, latestBlock),
+          queryFilterChunked(contractB, contractB.filters.Transfer(null, poolAddress), fromBlock, latestBlock),
+        ]);
+        if (cancelled) return;
+
+        const rows = [
+          ...depositsA.map((log) => ({
+            address: log.args.from,
+            amount: ethers.utils.formatUnits(log.args.value, pair.tokenA.decimals),
+            ticker: pair.tokenA.ticker,
+            txHash: log.transactionHash,
+            blockNumber: log.blockNumber,
+          })),
+          ...depositsB.map((log) => ({
+            address: log.args.from,
+            amount: ethers.utils.formatUnits(log.args.value, pair.tokenB.decimals),
+            ticker: pair.tokenB.ticker,
+            txHash: log.transactionHash,
+            blockNumber: log.blockNumber,
+          })),
+        ].sort((a, b) => b.blockNumber - a.blockNumber);
+
+        setContributors(rows);
+      } catch (err) {
+        console.error("Failed to load pool contributors:", err);
+        if (!cancelled) setContributorsError(err.message || "Couldn't load contributors.");
+      } finally {
+        if (!cancelled) setIsLoadingContributors(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [poolAddress, pair, contributorsRefresh]);
 
   useEffect(() => {
     if (!isConnected || !address || !pair) {
@@ -194,6 +296,7 @@ function Pool({ isConnected, address }) {
       setAmountA('');
       setAmountB('');
       fetchBalances();
+      setContributorsRefresh((n) => n + 1); // pick up this deposit in the list below
     } catch (err) {
       console.error("Add liquidity failed:", err);
       const reason = err.reason || err.error?.message || err.message || "";
@@ -226,6 +329,7 @@ function Pool({ isConnected, address }) {
   }
 
   return (
+    <>
     <div className="wrapBox" onMouseMove={handleTiltMove} onMouseLeave={handleTiltLeave}>
       <div className="wrapHeader">
         <h4>Add Liquidity</h4>
@@ -280,6 +384,42 @@ function Pool({ isConnected, address }) {
         {isBusy ? "Processing..." : "Add Liquidity"}
       </button>
     </div>
+
+    <div className="wrapBox poolContributorsBox">
+      <div className="wrapHeader">
+        <h4>Who's In This Pool</h4>
+      </div>
+      <div className="poolNote">
+        Every wallet that has deposited {pair.label} into this pool recently, scanned
+        directly from on-chain deposits - not just ones made through this page.
+      </div>
+
+      {isLoadingContributors && <div className="poolNote">Scanning recent deposits...</div>}
+      {contributorsError && <div className="poolNote poolNoteWarn">{contributorsError}</div>}
+      {!isLoadingContributors && !contributorsError && contributors.length === 0 && (
+        <div className="poolNote">No deposits found in the last ~20,000 blocks yet - be the first!</div>
+      )}
+
+      {contributors.map((c, i) => (
+        <div className="poolContributorRow" key={`${c.txHash}-${i}`}>
+          <span className="poolContributorAddress">
+            {c.address.slice(0, 6)}...{c.address.slice(-4)}
+          </span>
+          <span className="poolContributorAmount">
+            {Number(c.amount).toFixed(6)} {c.ticker}
+          </span>
+          <a
+            className="poolContributorLink"
+            href={`https://sepolia.etherscan.io/tx/${c.txHash}`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            View
+          </a>
+        </div>
+      ))}
+    </div>
+    </>
   );
 }
 

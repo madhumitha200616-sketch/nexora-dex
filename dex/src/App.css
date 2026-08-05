@@ -1523,6 +1523,59 @@ header {
   color: #e5484d;
 }
 
+.poolContributorsBox {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.poolContributorRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  padding: 10px 12px;
+  background:
+    linear-gradient(#17171f, #17171f) padding-box,
+    linear-gradient(135deg, rgba(0, 217, 255, 0.3), rgba(255, 46, 230, 0.2)) border-box;
+}
+
+.poolContributorAddress {
+  font-family: monospace;
+  font-size: 13px;
+  color: #cfd3e6;
+}
+
+.poolContributorAmount {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  color: white;
+  text-align: right;
+}
+
+.poolContributorLink {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 600;
+  color: white;
+  text-decoration: none;
+  background: linear-gradient(90deg, rgba(0, 217, 255, 0.18), rgba(255, 46, 230, 0.18));
+  border: 1px solid rgba(255, 46, 230, 0.4);
+  white-space: nowrap;
+  transition: 0.2s ease;
+}
+
+.poolContributorLink:hover {
+  background: linear-gradient(90deg, rgba(0, 217, 255, 0.35), rgba(255, 46, 230, 0.35));
+}
+
 .reviewContent {
   padding: 20px 24px 24px;
 }
