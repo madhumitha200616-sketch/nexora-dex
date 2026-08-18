@@ -54,14 +54,15 @@ header {
 
 .logo{
   width: auto;
-  height: 55px;
+  height: 42px;
   padding-right: 30px;
+  filter: drop-shadow(0 0 10px rgba(168, 85, 247, 0.4));
   transition: filter 0.3s ease, transform 0.3s ease;
 }
 
 .logo:hover {
-  filter: drop-shadow(0 0 10px rgba(255, 46, 230, 0.5));
-  transform: scale(1.03);
+  filter: drop-shadow(0 0 16px rgba(34, 211, 238, 0.7));
+  transform: scale(1.04);
 }
 
 .eth{
@@ -150,6 +151,364 @@ header {
   margin-top: 40px;
   display: flex;
   justify-content: center;
+}
+
+/* ---------- Nexora cinematic page shells (Swap, and reused elsewhere) ---------- */
+
+.nx-swap-shell {
+  position: relative;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 16px 60px;
+  box-sizing: border-box;
+}
+
+.nx-swap-header {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+/* ---------- Swap: asymmetric two-column cinematic composition ---------- */
+
+.nx-swap-layout {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1180px;
+  margin: 32px auto 0;
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: 56px;
+  align-items: center;
+}
+
+.nx-swap-intro {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.nx-swap-hero-title {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4vw, 3.1rem);
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  margin: 0;
+  background: var(--nx-gradient-title, linear-gradient(120deg, #7dd3fc, #e8ebf7, #c4b5fd, #6ee7b7));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.nx-swap-hero-sub {
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--nx-text-secondary, rgba(232, 235, 247, 0.62));
+  max-width: 440px;
+  margin: 0;
+}
+
+.nx-swap-chip-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.nx-swap-chip {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--nx-text-secondary, rgba(232, 235, 247, 0.75));
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--nx-glass-border, rgba(255, 255, 255, 0.1));
+}
+
+.nx-swap-live-card {
+  margin-top: 8px;
+  padding: 18px 22px;
+  border-radius: 20px;
+  max-width: 320px;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.015));
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 50px rgba(168, 85, 247, 0.15);
+}
+
+.nx-swap-live-card-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(232, 235, 247, 0.4);
+  margin-bottom: 6px;
+}
+
+.nx-swap-live-card-value {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+  color: #e8ebf7;
+  font-variant-numeric: tabular-nums;
+}
+
+.nx-swap-live-card-sub {
+  margin-top: 6px;
+  font-size: 12px;
+  color: rgba(232, 235, 247, 0.5);
+}
+
+@media (max-width: 900px) {
+  .nx-swap-layout {
+    grid-template-columns: 1fr;
+    gap: 32px;
+    text-align: center;
+  }
+  .nx-swap-intro {
+    align-items: center;
+  }
+  .nx-swap-hero-sub {
+    max-width: 100%;
+  }
+  .nx-swap-chip-row {
+    justify-content: center;
+  }
+}
+
+.nx-swap-view-pool {
+  margin-left: 10px;
+  color: var(--nx-cyan-soft, #7dd3fc);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.nx-swap-view-pool:hover {
+  text-decoration: underline;
+}
+
+/* ==========================================================================
+   Swap: "Find the best route" single centered trade card, framed by a full
+   ring of ThreeDScene coins (see the ThreeDBackground layout="ring" call in
+   Swap.js). Presentation only - every element below renders the exact same
+   state/handlers Swap.js already computes (tokenOneAmount, changeAmount,
+   switchTokens, openReviewModal, etc.), nothing here touches that logic.
+   ========================================================================== */
+
+.nx-swap-centered {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 560px;
+  margin: 8px auto 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.nx-swap-centered-header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.nx-swap-centered-header .nx-eyebrow {
+  margin-bottom: 14px;
+}
+
+.nx-swap-centered-header .nx-swap-hero-title {
+  font-size: clamp(1.8rem, 3.4vw, 2.6rem);
+}
+
+.nx-swap-centered-header .nx-swap-hero-sub {
+  max-width: 420px;
+  margin: 10px auto 0;
+}
+
+.nx-trade-card {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.nx-trade-head {
+  margin-bottom: 18px;
+}
+
+.nx-trade-head h4 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 20px;
+  margin: 0 0 4px;
+  color: var(--nx-text-primary, #e8ebf7);
+}
+
+.nx-trade-head p {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--nx-text-secondary, rgba(232, 235, 247, 0.6));
+}
+
+.nx-trade-row {
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--nx-glass-border, rgba(255, 255, 255, 0.09));
+  border-radius: var(--nx-radius-lg, 20px);
+  padding: 14px 16px 12px;
+  margin-bottom: 10px;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.nx-trade-row:focus-within {
+  border-color: var(--nx-glass-border-strong, rgba(255, 255, 255, 0.16));
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.nx-trade-row-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11.5px;
+  margin-bottom: 6px;
+}
+
+.nx-trade-row-label {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--nx-text-muted, rgba(232, 235, 247, 0.4));
+}
+
+.nx-trade-row-balance {
+  color: var(--nx-text-secondary, rgba(232, 235, 247, 0.6));
+}
+
+.nx-trade-row-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.nx-trade-amount-input.ant-input {
+  flex: 1;
+  min-width: 0;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--nx-text-primary, #e8ebf7);
+}
+
+.nx-trade-amount-input.ant-input::placeholder {
+  color: var(--nx-text-faint, rgba(232, 235, 247, 0.25));
+}
+
+.nx-trade-amount-input.ant-input[disabled] {
+  color: var(--nx-text-secondary, rgba(232, 235, 247, 0.6));
+  -webkit-text-fill-color: var(--nx-text-secondary, rgba(232, 235, 247, 0.6));
+}
+
+.nx-trade-token-pill {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--nx-glass-border, rgba(255, 255, 255, 0.09));
+  border-radius: var(--nx-radius-pill, 999px);
+  padding: 6px 12px 6px 6px;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--nx-text-primary, #e8ebf7);
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.nx-trade-token-pill:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: scale(1.03);
+}
+
+.nx-trade-chain-badge {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--nx-emerald-soft, #6ee7b7);
+  background: rgba(52, 211, 153, 0.12);
+  border-radius: var(--nx-radius-pill, 999px);
+  padding: 2px 7px;
+}
+
+.nx-trade-switch {
+  width: 34px;
+  height: 34px;
+  margin: -18px auto -14px;
+  background: var(--nx-bg-elevated, #12121a);
+  border: 3px solid var(--nx-bg-panel, #0c0c10);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--nx-text-secondary, rgba(232, 235, 247, 0.6));
+  position: relative;
+  z-index: 2;
+  cursor: pointer;
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.3s, color 0.3s;
+}
+
+.nx-trade-switch:hover {
+  color: #fff;
+  background: var(--nx-glass-border-strong, rgba(255, 255, 255, 0.16));
+  transform: rotateY(180deg) scale(1.12);
+}
+
+.nx-trade-info-row {
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--nx-glass-border, rgba(255, 255, 255, 0.09));
+  border-radius: var(--nx-radius-md, 14px);
+  padding: 10px 14px;
+  margin: 4px 0 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.nx-trade-info-line {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--nx-text-secondary, rgba(232, 235, 247, 0.65));
+}
+
+.nx-trade-cta {
+  width: 100%;
+  height: 54px;
+  font-size: 16px;
+  margin-top: 6px;
+}
+
+@media (max-width: 640px) {
+  .nx-swap-centered {
+    max-width: 100%;
+  }
+  .nx-trade-amount-input.ant-input {
+    font-size: 21px;
+  }
 }
 
 .link {
@@ -577,7 +936,7 @@ header {
 
 .tokenTicker {
   margin-left: 10px;
-  font-size: 13px;
+  font-size: 14.5px;
   font-weight: 300;
   color: #51596f;
 }
@@ -739,7 +1098,7 @@ header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 13px;
+  font-size: 14.5px;
   color: #8b93ac;
   margin-top: 10px;
   margin-bottom: 6px;
@@ -788,40 +1147,6 @@ header {
   color: white;
   transform: translateY(-2px);
   box-shadow: 0 6px 14px rgba(255, 46, 230, 0.18);
-}
-
-.chartBox {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  width: 480px;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid transparent;
-  border-radius: 20px;
-  padding: 22px 22px 12px;
-  margin-top: 20px;
-  box-sizing: border-box;
-  transition: box-shadow 0.4s ease, transform 0.15s ease-out;
-  animation: fadeInUp 0.55s ease 0.12s both, borderFlow 8s ease infinite 0.67s;
-  will-change: transform;
-  /* Same always-on flowing gradient border as the Swap trade box, instead
-     of a flat single-color border that only lights up on hover. */
-  background:
-    linear-gradient(rgba(15, 18, 33, 0.82), rgba(15, 18, 33, 0.82)) padding-box,
-    linear-gradient(135deg, rgba(255, 46, 230, 0.65), rgba(0, 217, 255, 0.55), rgba(255, 46, 230, 0.65)) border-box;
-  background-size: 100% 100%, 220% 220%;
-}
-
-.marketsBox {
-  width: 640px;
-  max-width: 92vw;
-  margin-top: 40px;
-  margin-bottom: 40px;
-}
-
-.marketsSubtitle {
-  margin-bottom: 12px;
 }
 
 .aiChatBox {
@@ -1104,37 +1429,6 @@ header {
   cursor: not-allowed;
   filter: none;
   transform: none;
-}
-
-.chartBox:hover {
-  box-shadow: 0 20px 60px rgba(0, 217, 255, 0.16), 0 10px 30px rgba(255, 46, 230, 0.2);
-}
-
-.chartTitleRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: 14px;
-}
-
-.chartTitle {
-  font-size: 13px;
-  color: #8b93ac;
-  font-weight: 500;
-}
-
-.chartTrend {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 14px;
-}
-
-.chartTrendUp {
-  color: #35e39a;
-}
-
-.chartTrendDown {
-  color: #ff5c7a;
 }
 
 .swapPageColumn {
@@ -1442,11 +1736,6 @@ header {
   padding: 3px;
 }
 
-.chartRangeTabs {
-  width: fit-content;
-  margin-bottom: 14px;
-}
-
 .wrapTab {
   font-size: 11px;
   font-weight: 600;
@@ -1512,70 +1801,6 @@ header {
   line-height: 1.5;
 }
 
-.poolNote {
-  font-size: 12px;
-  color: #5F6783;
-  line-height: 1.5;
-  margin-bottom: 10px;
-}
-
-.poolNoteWarn {
-  color: #e5484d;
-}
-
-.poolContributorsBox {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.poolContributorRow {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  border: 1px solid transparent;
-  border-radius: 12px;
-  padding: 10px 12px;
-  background:
-    linear-gradient(#17171f, #17171f) padding-box,
-    linear-gradient(135deg, rgba(0, 217, 255, 0.3), rgba(255, 46, 230, 0.2)) border-box;
-}
-
-.poolContributorAddress {
-  font-family: monospace;
-  font-size: 13px;
-  color: #cfd3e6;
-}
-
-.poolContributorAmount {
-  flex: 1;
-  font-size: 13px;
-  font-weight: 600;
-  color: white;
-  text-align: right;
-}
-
-.poolContributorLink {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 6px 12px;
-  border-radius: 100px;
-  font-size: 11px;
-  font-weight: 600;
-  color: white;
-  text-decoration: none;
-  background: linear-gradient(90deg, rgba(0, 217, 255, 0.18), rgba(255, 46, 230, 0.18));
-  border: 1px solid rgba(255, 46, 230, 0.4);
-  white-space: nowrap;
-  transition: 0.2s ease;
-}
-
-.poolContributorLink:hover {
-  background: linear-gradient(90deg, rgba(0, 217, 255, 0.35), rgba(255, 46, 230, 0.35));
-}
-
 .reviewContent {
   padding: 20px 24px 24px;
 }
@@ -1584,7 +1809,7 @@ header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 14px;
+  font-size: 15px;
   color: #8b93ac;
   padding: 9px 0;
   border-bottom: 1px solid #1c1c24;
@@ -1602,6 +1827,10 @@ header {
 
 .reviewImpactHigh {
   color: #e5484d !important;
+}
+
+.reviewImpactFixed {
+  color: #3ecf8e !important;
 }
 
 .reviewWarning {
@@ -1683,6 +1912,53 @@ header {
 
 .faucetBtn:hover {
   background: linear-gradient(90deg, rgba(0, 230, 160, 0.4), rgba(0, 217, 255, 0.35));
+  color: white;
+}
+
+/* .faucetBtn doubles as a <button> for claim/import actions - reset the
+   native button chrome and add a disabled state (cooldown / no wallet). */
+button.faucetBtn {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+button.faucetBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: linear-gradient(90deg, rgba(0, 230, 160, 0.2), rgba(0, 217, 255, 0.18));
+}
+
+.nexoraClaimCard {
+  flex-wrap: wrap;
+}
+
+.nexoraClaimTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nexoraClaimIcon {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+}
+
+.nexoraClaimActions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.nexoraImportBtn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #d8dcef;
+}
+
+.nexoraImportBtn:hover {
+  background: rgba(255, 255, 255, 0.08);
   color: white;
 }
 
@@ -1844,129 +2120,290 @@ header {
   color: white;
 }
 
-/* Post-swap "Download Receipt" prompt - a small card, on-screen only. */
-.receiptPrompt {
-  width: 480px;
+/* Post-swap Nexora Transaction Receipt UI */
+.nx-receipt-card {
+  width: 100%;
+  max-width: 580px;
+  margin: 28px auto 0;
+  padding: 28px 32px;
+  background: rgba(13, 12, 28, 0.85);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(168, 85, 247, 0.35);
+  border-radius: 24px;
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.6),
+    0 0 50px -10px rgba(168, 85, 247, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  box-sizing: border-box;
+  text-align: left;
+  animation: fadeInUp 0.35s ease both;
+}
+
+.nx-receipt-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 24px;
+}
+
+.nx-receipt-brand-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nx-receipt-badge {
+  font-family: var(--font-display);
+  font-size: 14.5px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.85);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.nx-receipt-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: var(--nx-radius-pill);
+  background: rgba(52, 211, 153, 0.14);
+  border: 1px solid rgba(52, 211, 153, 0.4);
+  color: #34d399;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.nx-receipt-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #34d399;
+  box-shadow: 0 0 10px #34d399;
+}
+
+.nx-receipt-hero-amount {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(34, 211, 238, 0.1));
+  border: 1px solid rgba(168, 85, 247, 0.25);
+  border-radius: 18px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+}
+
+.nx-receipt-amount-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
-  background: rgba(53, 227, 154, 0.1);
-  border: 1px solid rgba(53, 227, 154, 0.4);
-  border-radius: 16px;
-  padding: 14px 18px;
-  margin-top: 20px;
-  box-sizing: border-box;
-  animation: fadeInUp 0.4s ease both;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
-.receiptPromptText {
+.nx-receipt-amount-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.nx-receipt-amount-val {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.nx-receipt-amount-val.nx-accent {
+  color: #38bdf8;
+}
+
+.nx-receipt-amount-lbl {
   font-size: 13px;
-  color: #d8dcef;
-}
-
-.receiptPromptText strong {
-  color: #35e39a;
-}
-
-.receiptDownloadBtn {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 9px 16px;
-  border-radius: 100px;
-  font-size: 13px;
+  color: rgba(255, 255, 255, 0.55);
   font-weight: 600;
-  color: white;
-  background: rgba(53, 227, 154, 0.2);
-  border: 1px solid rgba(53, 227, 154, 0.5);
+}
+
+.nx-receipt-arrow {
+  font-size: 22px;
+  color: rgba(168, 85, 247, 0.8);
+  font-weight: 800;
+}
+
+.nx-receipt-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+.nx-receipt-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.nx-receipt-field.nx-receipt-full {
+  grid-column: span 2;
+}
+
+.nx-receipt-label {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.nx-receipt-value {
+  font-size: 15.5px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.nx-receipt-net-badge {
+  color: #7dd3fc;
+  font-weight: 700;
+}
+
+.nx-receipt-hash-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+}
+
+.nx-receipt-mono {
+  font-family: var(--font-mono, monospace);
+  font-size: 14px;
+  color: #e2e8f0;
+  word-break: break-all;
+  overflow-wrap: anywhere;
+}
+
+.nx-receipt-copy-btn {
+  background: rgba(168, 85, 247, 0.2);
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  color: #c084fc;
+  padding: 4px 12px;
+  border-radius: var(--nx-radius-pill);
+  font-size: 12.5px;
+  font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
-  transition: 0.2s ease;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
 }
 
-.receiptDownloadBtn:hover {
-  background: rgba(53, 227, 154, 0.4);
+.nx-receipt-copy-btn:hover {
+  background: rgba(168, 85, 247, 0.35);
+  color: #ffffff;
 }
 
-/* The receipt itself is invisible on screen - it only renders for print,
-   via window.print(), and every browser's print dialog can "Save as PDF"
-   as the destination printer. Everything else on the page is hidden while
-   printing so only the receipt sheet ends up on the page/PDF. */
+.nx-receipt-actions {
+  display: flex;
+  gap: 14px;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+
+.nx-receipt-etherscan-btn,
+.nx-receipt-print-btn {
+  flex: 1;
+  min-width: 200px;
+  text-decoration: none;
+}
+
+/* ---------- Printable Sheet Styling for window.print() ---------- */
+
 .receiptPrintOnly {
   display: none;
 }
 
+.nx-receipt-print-footer {
+  display: none;
+}
+
 @media print {
-  body * {
-    visibility: hidden;
+  @page {
+    margin: 0;
+    size: auto;
   }
+
+  html, body {
+    background-color: #080716 !important;
+    color: #ffffff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  body * {
+    visibility: hidden !important;
+  }
+
   .receiptPrintOnly,
   .receiptPrintOnly * {
-    visibility: visible;
+    visibility: visible !important;
   }
+
   .receiptPrintOnly {
-    display: block;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
+    min-height: 100vh;
+    padding: 40px 24px;
+    box-sizing: border-box;
+    background-color: #080716 !important;
+    background-image:
+      radial-gradient(1000px 600px at 50% -10%, rgba(168, 85, 247, 0.3), transparent 60%),
+      radial-gradient(800px 500px at 85% 20%, rgba(34, 211, 238, 0.25), transparent 55%),
+      #05040a !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
   }
-}
 
-.receiptSheet {
-  width: 100%;
-  max-width: 480px;
-  margin: 0 auto;
-  padding: 32px;
-  background: #ffffff;
-  color: #1a1a1a;
-  font-family: Arial, Helvetica, sans-serif;
-  box-sizing: border-box;
-}
+  .nx-receipt-card-print {
+    width: 100% !important;
+    max-width: 640px !important;
+    margin: 0 auto !important;
+    padding: 32px 36px !important;
+    background: #0f0d22 !important;
+    border: 2px solid #a855f7 !important;
+    border-radius: 24px !important;
+    box-shadow: 0 0 40px rgba(168, 85, 247, 0.4) !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
 
-.receiptBrand {
-  font-size: 22px;
-  font-weight: 800;
-  letter-spacing: -0.5px;
-}
+  .nx-receipt-print-footer {
+    display: flex !important;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 24px;
+    padding-top: 18px;
+    border-top: 1px dashed rgba(255, 255, 255, 0.15);
+  }
 
-.receiptTitle {
-  font-size: 13px;
-  color: #666;
-  margin-bottom: 20px;
-}
-
-.receiptRow {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  font-size: 12px;
-  padding: 6px 0;
-}
-
-.receiptRow span:first-child {
-  color: #666;
-}
-
-.receiptMono {
-  font-family: "Courier New", monospace;
-  word-break: break-all;
-  text-align: right;
-  max-width: 300px;
-}
-
-.receiptDivider {
-  border-top: 1px solid #ddd;
-  margin: 12px 0;
-}
-
-.receiptFooter {
-  margin-top: 20px;
-  font-size: 10px;
-  color: #999;
-  word-break: break-all;
+  .nx-receipt-link-url {
+    color: #38bdf8 !important;
+    font-family: var(--font-mono, monospace);
+    font-size: 12.5px;
+    word-break: break-all;
+    text-decoration: underline;
+  }
 }
 
 /* ==========================================================================
@@ -2044,6 +2481,37 @@ header {
 
 .ant-message-warning .anticon {
   color: #ffb648;
+}
+
+/* ==========================================================================
+   Mobile responsiveness pass - appended last so these overrides win the
+   cascade against the equal-specificity rules defined earlier in this file
+   (.tradeBox, .wrapBox, .walletStatsGrid, etc. were all written with a
+   fixed desktop width and no mobile variant of their own).
+   ========================================================================== */
+@media (max-width: 640px) {
+  .tradeBox,
+  .wrapBox {
+    width: 100%;
+    max-width: 480px;
+    box-sizing: border-box;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .nx-swap-shell {
+    padding-left: 8px;
+    padding-right: 8px;
+    box-sizing: border-box;
+  }
+
+  .walletStatsGrid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .txRow {
+    flex-wrap: wrap;
+  }
 }
 
 .ant-message-loading .anticon {

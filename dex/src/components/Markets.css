@@ -1,0 +1,375 @@
+/* marketsPage is used as PageShell's contentClassName - PageShell already
+   provides outer padding and max-width via nx-page-shell/nx-page-content,
+   so this class intentionally adds nothing layout-wise anymore. Kept as a
+   hook in case page-specific overrides are needed later. */
+.marketsPage {
+}
+
+/* ---------- KPI tile row ---------- */
+
+.marketsKpiRow {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 760px) {
+  .marketsKpiRow {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ---------- Token tabs ---------- */
+
+.marketsTokenTabs {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.marketsTokenTab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(232, 235, 247, 0.65);
+  font-size: 15.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+
+.marketsTokenTab:hover {
+  background: rgba(255, 255, 255, 0.06);
+  transform: translateY(-1px);
+}
+
+.marketsTokenTabActive {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.18), rgba(56, 189, 248, 0.14));
+  border-color: rgba(168, 85, 247, 0.5);
+  color: #e8ebf7;
+  box-shadow: 0 0 24px rgba(168, 85, 247, 0.18);
+}
+
+.marketsTokenTabIcon {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+}
+
+.marketsLoading {
+  font-size: 13px;
+  color: rgba(232, 235, 247, 0.5);
+  padding: 60px 16px;
+  text-align: center;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.marketsErrorBox {
+  padding: 48px 16px;
+  text-align: center;
+  border-radius: 20px;
+  background: rgba(248, 113, 113, 0.05);
+  border: 1px solid rgba(248, 113, 113, 0.2);
+}
+
+.marketsErrorTitle {
+  font-size: 15px;
+  font-weight: 800;
+  color: #f87171;
+  margin-bottom: 6px;
+}
+
+.marketsErrorSub {
+  font-size: 12.5px;
+  color: rgba(232, 235, 247, 0.5);
+  margin-bottom: 18px;
+  line-height: 1.5;
+}
+
+.marketsRetryBtn {
+  padding: 9px 24px;
+  border-radius: 999px;
+  background: rgba(248, 113, 113, 0.14);
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  color: #f87171;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.marketsRetryBtn:hover {
+  background: rgba(248, 113, 113, 0.22);
+  transform: translateY(-1px);
+}
+
+/* ---------- Layout: main column + side panel ---------- */
+
+.marketsLayout {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 980px) {
+  .marketsLayout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.marketsMainCol {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+/* ---------- Glass card shell ---------- */
+
+.marketsChartCard,
+.marketsTableCard,
+.marketsSidePanel {
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 22px;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.28);
+  padding: 22px 24px;
+}
+
+/* ---------- Chart card header ---------- */
+
+.marketsChartCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.marketsPairInfo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.marketsPairIcon {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+}
+
+.marketsPairName {
+  font-size: 17px;
+  font-weight: 800;
+  color: #e8ebf7;
+}
+
+.marketsPairFee {
+  font-size: 11px;
+  color: rgba(232, 235, 247, 0.45);
+  margin-top: 2px;
+}
+
+.marketsTimeframeTabs {
+  display: flex;
+  gap: 6px;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.marketsTfBtn {
+  padding: 6px 16px;
+  border-radius: 999px;
+  background: transparent;
+  border: none;
+  color: rgba(232, 235, 247, 0.5);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.marketsTfBtn:hover {
+  color: rgba(232, 235, 247, 0.8);
+}
+
+.marketsTfBtnActive {
+  background: rgba(56, 189, 248, 0.18);
+  color: #38bdf8;
+}
+
+/* ---------- Stat row ---------- */
+
+.marketsStatRow {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-bottom: 18px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.marketsBigPrice {
+  font-size: 30px;
+  font-weight: 800;
+  color: #e8ebf7;
+  font-variant-numeric: tabular-nums;
+}
+
+.marketsBigPrice span {
+  font-size: 15px;
+  font-weight: 700;
+  color: rgba(232, 235, 247, 0.5);
+  margin-left: 6px;
+}
+
+.marketsChangePill {
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.marketsChangeUp {
+  background: rgba(52, 211, 153, 0.14);
+  color: #34d399;
+}
+
+.marketsChangeDown {
+  background: rgba(248, 113, 113, 0.14);
+  color: #f87171;
+}
+
+.marketsMiniStat {
+  display: flex;
+  flex-direction: column;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #e8ebf7;
+  font-variant-numeric: tabular-nums;
+}
+
+.marketsMiniStat span {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(232, 235, 247, 0.4);
+  margin-bottom: 3px;
+}
+
+/* ---------- Historical table ---------- */
+
+.marketsTableTitle {
+  font-size: 16px;
+  font-weight: 800;
+  color: #e8ebf7;
+  margin-bottom: 14px;
+}
+
+.marketsTableScroll {
+  overflow-x: auto;
+}
+
+.marketsTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14.5px;
+  white-space: nowrap;
+}
+
+.marketsTable th {
+  text-align: right;
+  padding: 8px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(232, 235, 247, 0.4);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.marketsTable th:first-child,
+.marketsTable td:first-child {
+  text-align: left;
+}
+
+.marketsTable td {
+  text-align: right;
+  padding: 9px 10px;
+  color: #e8ebf7;
+  font-variant-numeric: tabular-nums;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.marketsTable tbody tr {
+  transition: background 0.12s ease;
+}
+
+.marketsTable tbody tr:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.marketsCellUp {
+  color: #34d399 !important;
+}
+
+.marketsCellDown {
+  color: #f87171 !important;
+}
+
+/* ---------- Side panel ---------- */
+
+.marketsSidePanel {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: sticky;
+  top: 20px;
+}
+
+.marketsSidePanelTitle {
+  font-size: 16px;
+  font-weight: 800;
+  color: #e8ebf7;
+  margin-bottom: 10px;
+}
+
+.marketsSideRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 0;
+  font-size: 14.5px;
+}
+
+.marketsSideRow span {
+  color: rgba(232, 235, 247, 0.5);
+}
+
+.marketsSideRow strong {
+  color: #e8ebf7;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.marketsSideDivider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.07);
+  margin: 8px 0;
+}

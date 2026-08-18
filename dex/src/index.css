@@ -5,6 +5,14 @@
   --font-display: 'Sora', 'Inter', sans-serif;
 }
 
+html {
+  overflow-x: hidden;
+  /* Slight sitewide bump - every clamp(...rem...) size already used across
+     the app (page titles, stat values, body copy) scales proportionally
+     from this, rather than hand-tuning font-size on every component. */
+  font-size: 107%;
+}
+
 body {
   margin: 0;
   font-family: var(--font-body);
@@ -12,15 +20,25 @@ body {
   -moz-osx-font-smoothing: grayscale;
   height: 100vh;
   width: 100vw;
+  overflow-x: hidden;
   background-color: #000000 !important;
+  /* Smooth cinematic void, matching the reference images' backgrounds -
+     deliberately NO grid-line overlay (a visible dashboard grid was the
+     single strongest tell that this read as "generic dark dashboard"
+     instead of the references' cinematic atmosphere). Soft off-center
+     violet/cyan/magenta blooms + a faint vertical light-beam behind the
+     hero content (the NexChain/MoonChain reference cue), fading into a
+     deep vignette. */
   background-image:
-    linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px),
-    radial-gradient(circle at 15% 20%, rgba(0, 217, 255, 0.14), transparent 35%),
-    radial-gradient(circle at 85% 15%, rgba(255, 46, 230, 0.14), transparent 35%),
-    radial-gradient(circle at 50% 100%, rgba(0, 217, 255, 0.08), transparent 45%),
-    radial-gradient(ellipse at center, #060608 0%, #000000 80%);
-  background-size: 46px 46px, 46px 46px, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
+    radial-gradient(1200px 700px at 50% -10%, rgba(168, 85, 247, 0.16), transparent 60%),
+    radial-gradient(900px 600px at 12% 15%, rgba(34, 211, 238, 0.14), transparent 55%),
+    radial-gradient(900px 600px at 88% 20%, rgba(255, 46, 230, 0.1), transparent 55%),
+    radial-gradient(700px 900px at 50% 100%, rgba(109, 94, 252, 0.1), transparent 55%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 40%),
+    radial-gradient(ellipse at center, #08080f 0%, #000000 82%);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 3px 100%, 100% 100%;
+  background-position: 0 0, 0 0, 0 0, 0 0, 50% 0, 0 0;
+  background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat;
   background-attachment: fixed;
   color: white;
 }

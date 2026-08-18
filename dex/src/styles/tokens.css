@@ -1,0 +1,115 @@
+/* ==========================================================================
+   Nexora Design Tokens
+   Shared CSS variables for the whole app. Extends (does not replace) the
+   --font-body / --font-display variables and dark/cyan/magenta palette
+   already established in index.css + NexoraFaucet.css, so pages that are
+   restyled incrementally still read as one system with pages that aren't
+   touched yet.
+   ========================================================================== */
+
+:root {
+  /* Surfaces */
+  --nx-bg-void: #000000;
+  --nx-bg-deep: #05050b;
+  --nx-bg-panel: #0c0c10;
+  --nx-bg-elevated: #12121a;
+  --nx-bg-input: #17171f;
+
+  /* Glass */
+  --nx-glass-fill: linear-gradient(160deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.015));
+  --nx-glass-fill-strong: linear-gradient(160deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.02));
+  --nx-glass-border: rgba(255, 255, 255, 0.09);
+  --nx-glass-border-strong: rgba(255, 255, 255, 0.16);
+  --nx-glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --nx-glass-blur: 20px;
+
+  /* Accent palette (matches existing app-wide usage) */
+  --nx-cyan: #22d3ee;
+  --nx-cyan-soft: #7dd3fc;
+  --nx-purple: #a855f7;
+  --nx-violet: #6d5efc;
+  --nx-magenta: #ff2ee6;
+  --nx-emerald: #34d399;
+  --nx-emerald-soft: #6ee7b7;
+  --nx-blue: #3b82f6;
+  --nx-amber: #facc15;
+  --nx-orange: #fb923c;
+  --nx-red: #f87171;
+
+  --nx-gradient-primary: linear-gradient(90deg, var(--nx-purple), var(--nx-violet) 55%, var(--nx-cyan));
+  /* Punchier 2-tone violet->cyan sweep (was a 4-stop pastel blend that
+     diluted toward green) - matches the saturated gradient-text treatment
+     on the accent phrase in the reference hero headlines. */
+  --nx-gradient-title: linear-gradient(100deg, #c4b5fd 0%, #a855f7 40%, #6d5efc 70%, #22d3ee 100%);
+  --nx-gradient-success: linear-gradient(90deg, #22d3ee, #34d399);
+  --nx-gradient-conic: conic-gradient(from var(--nx-angle, 0deg), #22d3ee, #a855f7, #34d399, #3b82f6, #22d3ee);
+
+  /* Text */
+  --nx-text-primary: #e8ebf7;
+  --nx-text-secondary: rgba(232, 235, 247, 0.6);
+  --nx-text-muted: rgba(232, 235, 247, 0.4);
+  --nx-text-faint: rgba(232, 235, 247, 0.25);
+
+  /* Radii */
+  --nx-radius-sm: 10px;
+  --nx-radius-md: 14px;
+  --nx-radius-lg: 20px;
+  --nx-radius-xl: 28px;
+  --nx-radius-pill: 999px;
+
+  /* Spacing scale */
+  --nx-space-xs: 6px;
+  --nx-space-sm: 12px;
+  --nx-space-md: 20px;
+  --nx-space-lg: 32px;
+  --nx-space-xl: 56px;
+
+  /* Motion */
+  --nx-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --nx-dur-fast: 0.2s;
+  --nx-dur-med: 0.4s;
+  --nx-dur-slow: 0.8s;
+
+  /* Layout */
+  --nx-navbar-h: 76px;
+  --nx-content-max: 1240px;
+}
+
+@property --nx-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes nx-border-spin {
+  to { --nx-angle: 360deg; }
+}
+
+@keyframes nx-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+@keyframes nx-float-y {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes nx-fade-up {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes nx-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

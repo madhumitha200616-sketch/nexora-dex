@@ -1,0 +1,439 @@
+/* ==========================================================================
+   Nexora shared UI primitives (GlassCard, buttons, StatCard, TokenIcon,
+   PageShell, EmptyState). Every class here is prefixed nx- and scoped to
+   these components only - it does not touch any selector already used by
+   Swap/Wallet/Tokens/WrapEth/Faucets/NexoraFaucet/Analytics/Markets, so
+   dropping these components into those pages only changes what's inside
+   the wrapper, never anything outside it.
+   ========================================================================== */
+
+/* ---------- Glass card ---------- */
+
+.nx-glass-card {
+  position: relative;
+  background: var(--nx-glass-fill);
+  backdrop-filter: blur(var(--nx-glass-blur));
+  -webkit-backdrop-filter: blur(var(--nx-glass-blur));
+  border-radius: var(--nx-radius-lg);
+  border: 1px solid var(--nx-glass-border-strong);
+  /* Every glass card carries a soft resting glow + inner top highlight by
+     default now, not only on hover/.nx-glow - the reference cards read as
+     lit from within even at rest, which a plain border+flat-shadow card
+     never will. */
+  box-shadow:
+    var(--nx-glass-shadow),
+    0 0 60px -20px rgba(168, 85, 247, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition: transform var(--nx-dur-fast) var(--nx-ease), box-shadow var(--nx-dur-med) var(--nx-ease), border-color var(--nx-dur-med) var(--nx-ease);
+}
+
+.nx-glass-card.nx-glow::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: var(--nx-radius-lg);
+  padding: 1px;
+  background: var(--nx-gradient-conic);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0.4;
+  pointer-events: none;
+  animation: nx-border-spin 7s linear infinite;
+}
+
+.nx-glass-card.nx-hoverable:hover {
+  transform: translateY(-6px);
+  border-color: rgba(255, 255, 255, 0.26);
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.5),
+    0 0 90px -18px rgba(168, 85, 247, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.nx-glass-card.nx-pad-sm { padding: 16px 18px; }
+.nx-glass-card.nx-pad-md { padding: 24px 26px; }
+.nx-glass-card.nx-pad-lg { padding: 36px 32px; }
+
+/* ---------- Buttons ---------- */
+
+.nx-btn {
+  font-family: var(--font-body);
+  cursor: pointer;
+  border: none;
+  border-radius: var(--nx-radius-pill);
+  padding: 15px 28px;
+  font-size: 15.5px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: transform 0.15s ease, box-shadow var(--nx-dur-fast) ease, opacity 0.2s ease, background var(--nx-dur-fast) ease;
+  white-space: nowrap;
+}
+
+.nx-btn:active:not(:disabled) { transform: scale(0.97); }
+
+.nx-btn-primary {
+  color: #05040a;
+  background: var(--nx-gradient-primary);
+  /* Resting glow, not just on hover - the reference CTA pills read as
+     lit/glowing even before you touch them. */
+  box-shadow: 0 8px 30px -6px rgba(168, 85, 247, 0.55);
+}
+
+.nx-btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px -4px rgba(168, 85, 247, 0.75);
+}
+
+.nx-btn-secondary {
+  color: rgba(232, 235, 247, 0.85);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--nx-glass-border-strong);
+}
+
+.nx-btn-secondary:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+.nx-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.nx-btn-full { width: 100%; }
+.nx-btn-sm { padding: 9px 16px; font-size: 13.5px; }
+
+/* ---------- Stat card ---------- */
+
+.nx-stat-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 22px 20px;
+}
+
+.nx-stat-icon-badge {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.45), rgba(109, 94, 252, 0.35));
+  border: 1px solid rgba(168, 85, 247, 0.5);
+  box-shadow: 0 0 18px rgba(168, 85, 247, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: #fff;
+  margin-bottom: 2px;
+}
+
+.nx-stat-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+}
+
+.nx-stat-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+  text-align: center;
+}
+
+.nx-stat-value {
+  font-family: var(--font-display);
+  font-size: clamp(1.15rem, 2.5vw, 2.1rem);
+  font-weight: 800;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  text-align: center;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.nx-stat-trend {
+  font-size: 12px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: var(--nx-radius-pill);
+}
+
+.nx-stat-trend.nx-up { color: #34d399; background: rgba(52, 211, 153, 0.15); border: 1px solid rgba(52, 211, 153, 0.3); }
+.nx-stat-trend.nx-down { color: #f87171; background: rgba(248, 113, 113, 0.15); border: 1px solid rgba(248, 113, 113, 0.3); }
+.nx-stat-trend.nx-neutral { color: var(--nx-text-muted); background: rgba(255, 255, 255, 0.05); }
+
+/* ---------- Token icon ---------- */
+
+.nx-token-icon {
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 800;
+  color: #05040a;
+  background: var(--nx-gradient-success);
+  overflow: hidden;
+  box-shadow: 0 4px 14px rgba(34, 211, 238, 0.25);
+}
+
+.nx-token-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ---------- Page shell ---------- */
+
+.nx-page-shell {
+  position: relative;
+  min-height: calc(100vh - var(--nx-navbar-h));
+  width: 100%;
+  padding: 56px 24px 96px;
+  box-sizing: border-box;
+  overflow: hidden;
+  color: var(--nx-text-primary);
+  animation: nx-fade-up var(--nx-dur-slow) var(--nx-ease);
+}
+
+.nx-page-content {
+  position: relative;
+  z-index: 10;
+  max-width: var(--nx-content-max);
+  margin: 0 auto;
+}
+
+.nx-page-header {
+  text-align: center;
+  padding-bottom: var(--nx-space-xl);
+}
+
+.nx-page-header.nx-align-left {
+  text-align: left;
+  padding-bottom: var(--nx-space-lg);
+}
+
+.nx-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 16px;
+  border-radius: var(--nx-radius-pill);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--nx-text-secondary);
+  margin-bottom: 22px;
+}
+
+.nx-eyebrow-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--nx-emerald);
+  box-shadow: 0 0 8px var(--nx-emerald);
+  animation: nx-pulse 2s ease-in-out infinite;
+}
+
+.nx-page-title {
+  font-family: var(--font-display);
+  /* ~15% up from the previous clamp(2rem, 4.6vw, 3.4rem) */
+  font-size: clamp(2.3rem, 5.2vw, 3.9rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.08;
+  margin: 0 0 16px;
+  background: var(--nx-gradient-title);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 60px rgba(125, 211, 252, 0.2);
+}
+
+.nx-page-sub {
+  font-size: clamp(17.5px, 1.8vw, 18.5px);
+  color: var(--nx-text-secondary);
+  max-width: 640px;
+  margin: 0 auto;
+  line-height: 1.65;
+}
+
+.nx-page-header.nx-align-left .nx-page-sub { margin: 0; }
+
+/* ---------- Empty state ---------- */
+
+.nx-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+  padding: 48px 28px;
+}
+
+.nx-empty-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--nx-glass-border);
+  margin-bottom: 4px;
+}
+
+.nx-empty-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--nx-text-primary);
+}
+
+.nx-empty-desc {
+  font-size: 16.5px;
+  color: var(--nx-text-secondary);
+  max-width: 360px;
+  line-height: 1.65;
+}
+
+.nx-empty-badge {
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--nx-amber);
+  background: rgba(250, 204, 21, 0.1);
+  border: 1px solid rgba(250, 204, 21, 0.3);
+  padding: 5px 12px;
+  border-radius: var(--nx-radius-pill);
+}
+
+/* ---------- Section heading (reused across new pages) ---------- */
+
+.nx-section-heading {
+  text-align: center;
+  font-family: var(--font-display);
+  /* ~12% up from clamp(1.5rem, 2.8vw, 2.0rem) */
+  font-size: clamp(1.7rem, 3.2vw, 2.25rem);
+  font-weight: 800;
+  color: var(--nx-text-primary);
+  margin: 0 0 10px;
+}
+
+.nx-section-sub {
+  text-align: center;
+  font-size: clamp(16.5px, 1.7vw, 18.5px);
+  color: rgba(232, 235, 247, 0.7);
+  margin: 0 0 32px;
+  line-height: 1.65;
+}
+
+/* ---------- 3D background fallback ---------- */
+
+.nx-3d-fallback {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 18% 15%, rgba(168, 85, 247, 0.22), transparent 42%),
+    radial-gradient(circle at 82% 20%, rgba(34, 211, 238, 0.18), transparent 42%),
+    radial-gradient(circle at 50% 100%, rgba(52, 211, 153, 0.1), transparent 50%);
+  animation: nx-fade-up var(--nx-dur-slow) var(--nx-ease);
+}
+
+.nx-3d-fallback-fixed {
+  position: fixed;
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 640px) {
+  .nx-page-shell {
+    padding: 40px 14px 80px;
+  }
+  .nx-glass-card.nx-pad-lg { padding: 24px 20px; }
+}
+
+/* ---------- StatCard Component Styles ---------- */
+
+.nx-stat-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.nx-stat-icon-badge {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.45), rgba(109, 94, 252, 0.25));
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 20px rgba(109, 94, 252, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.nx-stat-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  min-width: 0;
+  flex: 1;
+}
+
+.nx-stat-label {
+  font-size: 13.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(232, 235, 247, 0.5);
+}
+
+.nx-stat-value {
+  font-family: var(--font-display);
+  font-size: clamp(20px, 2.2vw, 28px);
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.2;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.nx-stat-trend {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--nx-emerald);
+}

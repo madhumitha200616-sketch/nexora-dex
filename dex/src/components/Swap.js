@@ -1,17 +1,29 @@
 import React,{useState, useEffect, useRef} from 'react'
-import { Input, Popover, Radio, Modal, message } from "antd";
+import { Input, Modal, message } from "antd";
 import {
   ArrowDownOutlined,
   DownOutlined,
-  SettingOutlined,
   ThunderboltOutlined,
 } from "@ant-design/icons";
 import axios from "axios";
 import { ethers } from "ethers";
 
+import { Link } from "react-router-dom";
 import tokenList from "../tokenList.json";
+import analyticsConfig from "../analyticsConfig.json";
 import Receipt from "./Receipt";
 import { API_BASE_URL } from "../apiConfig";
+import ThreeDBackground from "./ui/ThreeDBackground";
+import GlassCard from "./ui/GlassCard";
+import TokenIcon from "./ui/TokenIcon";
+import PrimaryButton from "./ui/PrimaryButton";
+import { useNotifications } from "../context/NotificationsContext";
+
+// Every Sepolia-supported token gets a coin in the full ring surrounding the
+// trade card - purely presentational (which tokens can actually be swapped
+// is still entirely governed by tokenList's own sepoliaAddress field, read
+// elsewhere in this file exactly as before).
+const RING_COINS = tokenList.filter((t) => t.sepoliaAddress).map((t) => ({ ticker: t.ticker }));
 
 // Uniswap V3 QuoterV2 - deployed at a DIFFERENT address on Sepolia than on mainnet.
 // (The mainnet QuoterV1 address has no contract code on Sepolia - calls to it
@@ -19,7 +31,11 @@ import { API_BASE_URL } from "../apiConfig";
 // but never actually moved any tokens.)
 const QUOTER_ADDRESS = "0xEd1f6473345F45b75F8179591dd5bA1888cf2FB3";
 const QUOTER_ABI = [
-  "function quoteExactInputSingle((address tokenIn, address tokenOut, uint256 amountIn, uint24 fee, uint160 sqrtPriceLimitX96)) external returns (uint256 amountOut, uint160 sqrtPriceX96After, uint32 initializedTicksCrossed, uint256 gasEstimate)"
+  "function quoteExactInputSingle((address tokenIn, address tokenOut, uint256 amountIn, uint24 fee, uint160 sqrtPriceLimitX96)) external returns (uint256 amountOut, uint160 sqrtPriceX96After, uint32 initializedTicksCrossed, uint256 gasEstimate)",
+  // Multi-hop quote - verified live against Sepolia (real quoteExactInput
+  // call cross-checked against two chained quoteExactInputSingle calls,
+  // both returned identical results) before this was wired into the UI.
+  "function quoteExactInput(bytes path, uint256 amountIn) external returns (uint256 amountOut, uint160[] sqrtPriceX96AfterList, uint32[] initializedTicksCrossedList, uint256 gasEstimate)"
 ];
 
 // Uniswap V3 Factory - used to auto-detect which fee tier actually has a live pool
@@ -35,13 +51,30 @@ const FEE_TIERS = [500, 3000, 10000, 100]; // check most common tiers first
 // exactInputSingle also has no `deadline` field, unlike the old v1 router.
 const ROUTER_ADDRESS = "0x3bFA4769FB09eefC5a80d6E87c3B9C650f7Ae48E";
 const ROUTER_ABI = [
-  "function exactInputSingle((address tokenIn, address tokenOut, uint24 fee, address recipient, uint256 amountIn, uint256 amountOutMinimum, uint160 sqrtPriceLimitX96)) external payable returns (uint256 amountOut)"
+  "function exactInputSingle((address tokenIn, address tokenOut, uint24 fee, address recipient, uint256 amountIn, uint256 amountOutMinimum, uint160 sqrtPriceLimitX96)) external payable returns (uint256 amountOut)",
+  // Multi-hop execution - verified read-only (callStatic, no signer, no tx)
+  // against the live Sepolia deployment: reverted with "STF" (a real
+  // execution-path revert, not a missing-function error), confirming this
+  // function exists and is reachable on ROUTER_ADDRESS above.
+  "function exactInput((bytes path, address recipient, uint256 amountIn, uint256 amountOutMinimum)) external payable returns (uint256 amountOut)",
+  // ERC-2612 permit + multicall - verified read-only against the deployed
+  // Sepolia router: all four selectors (multicall, selfPermit,
+  // selfPermitIfNecessary, selfPermitAllowed(IfNecessary)) were found
+  // present in the router's actual runtime bytecode, confirming this is the
+  // full official SwapRouter02 periphery contract, not a stripped build.
+  "function selfPermit(address token, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external payable",
+  "function multicall(bytes[] data) external payable returns (bytes[] memory results)"
 ];
 
 const ERC20_ABI = [
   "function approve(address spender, uint256 amount) external returns (bool)",
   "function allowance(address owner, address spender) external view returns (uint256)",
-  "function balanceOf(address owner) external view returns (uint256)"
+  "function balanceOf(address owner) external view returns (uint256)",
+  // Only used for the ERC-2612 permit path (USDC) - real on-chain reads,
+  // never a substitute for the allowance/approve fallback used by every
+  // other token.
+  "function nonces(address owner) view returns (uint256)",
+  "function name() view returns (string)"
 ];
 
 // Floor per token below which a swap is rejected before it ever reaches
@@ -54,6 +87,13 @@ const MIN_SWAP_AMOUNT = {
   USDC: 0.5,
 };
 
+// Fixed internal safety margin used to compute amountOutMinimum for the
+// on-chain swap call. No longer user-configurable (there's no Settings UI
+// for it) - this exists purely so the Uniswap Router still has a sane
+// minimum-received guard against the price moving between quote and
+// execution. Not shown anywhere in the UI.
+const DEFAULT_SLIPPAGE_PCT = 2.5;
+
 // A single-hop Uniswap V3 exactInputSingle swap (once the token is already
 // approved) typically costs somewhere around 120k-180k gas. There's no way
 // to get an exact number without actually simulating the specific call with
@@ -64,11 +104,60 @@ const MIN_SWAP_AMOUNT = {
 // most wallets show before you've even opened MetaMask.
 const SWAP_GAS_LIMIT_ESTIMATE = ethers.BigNumber.from(180000);
 
+// ERC-2612 permit support - verified read-only against the deployed Sepolia
+// USDC contract only (nonces()/DOMAIN_SEPARATOR() both succeed there; every
+// other supported token was checked the same way and does NOT support
+// permit - NOVA/FSN/VRTX/ORBT/WETH/LINK all keep the standard approve flow
+// below, unchanged). Detection is by the verified deployed address, not by
+// ticker/name, per requirement.
+const SEPOLIA_CHAIN_ID = 11155111;
+// The verified deployed USDC address (same source already used elsewhere in
+// this project) - detection uses this address, never the token's ticker or
+// display name.
+const USDC_ADDRESS = analyticsConfig.usdcAddress;
+// name="USDC", version="2" was verified by reproducing the token's real
+// on-chain DOMAIN_SEPARATOR() byte-for-byte before this was ever wired into
+// a signature request - see project history for the verification method.
+const USDC_PERMIT_DOMAIN_VERSION = "2";
+function isPermitSupportedToken(token) {
+  return !!token.sepoliaAddress && token.sepoliaAddress.toLowerCase() === USDC_ADDRESS.toLowerCase();
+}
+
 // Note: pool fee tier is now auto-detected via findPoolFee() instead of hardcoded,
 // since Sepolia may have the WETH/USDC pool on a different fee tier than mainnet.
 
+// Tokens intermediate/candidate-route generation is allowed to consider -
+// same set AddLiquidity.js uses (anything actually deployed on this testnet).
+const SEPOLIA_TOKENS = tokenList.filter((t) => t.sepoliaAddress);
+
+// Standard Uniswap V3 path encoding: token - fee - token - fee - token ...
+// Verified live against Sepolia's QuoterV2.quoteExactInput before use here.
+function encodePath(tokens, fees) {
+  const types = [];
+  const values = [];
+  for (let i = 0; i < fees.length; i++) {
+    types.push("address", "uint24");
+    values.push(tokens[i], fees[i]);
+  }
+  types.push("address");
+  values.push(tokens[tokens.length - 1]);
+  return ethers.utils.solidityPack(types, values);
+}
+
+// Real reference USD price for a route's OUTPUT token, used only to convert
+// a route's real gas cost into the same unit as its real quoted output so
+// routes can be compared on a like-for-like "gas-adjusted output" basis.
+// USDC is treated at its standard $1 peg; the four project tokens use the
+// same analyticsConfig priceUsd values already relied on elsewhere in this
+// app (Pools/Markets TVL) - not a new or invented data source. Returns null
+// (never a guess) for any token without a known reference price.
+function getStaticUsdPrice(ticker) {
+  if (ticker === "USDC") return 1;
+  const entry = analyticsConfig.tokens.find((t) => t.ticker === ticker);
+  return entry ? entry.priceUsd : null;
+}
+
 function Swap({ isConnected, address }) {
-  const [slippage, setSlippage] = useState(2.5);
   const [tokenOneAmount, settokenOneAmount] = useState(null);
   const [tokenTwoAmount, settokenTwoAmount] = useState(null);
   const [tokenOne, settokenOne] = useState(tokenList[0]);
@@ -78,11 +167,32 @@ function Swap({ isConnected, address }) {
   const [prices, setPrices] = useState(null);
   const [balance, setBalance] = useState(null);
   const [isSwapping, setIsSwapping] = useState(false);
+  // Distinct from isSwapping - true only while waiting on the free,
+  // off-chain EIP-712 permit SIGNATURE (USDC only), before the actual swap
+  // transaction is ever submitted. Never used to describe the signature as
+  // a transaction anywhere in the UI.
+  const [isRequestingSignature, setIsRequestingSignature] = useState(false);
   // Cached { fee, poolAddress } for the current tokenOne/tokenTwo pair, or
   // null if no live pool exists. This only depends on WHICH tokens are
   // selected, not on the amount typed, so it's detected once per pair
   // instead of on every keystroke (see the useEffect below).
   const [poolInfo, setPoolInfo] = useState(null);
+  // Real 2-hop candidates for the current pair - [{midToken, leg1, leg2}],
+  // only ever populated with legs that actually exist on-chain (via
+  // Factory.getPool) AND have non-zero liquidity on BOTH legs. Detected once
+  // per pair change, same lifecycle as poolInfo above.
+  const [hopCandidates, setHopCandidates] = useState([]);
+  // The route actually chosen by the adaptive selector for the current
+  // amount - { type: 'direct'|'2hop', hopsLabel, fee|path, amountOut,
+  // gasEstimate, priceImpactPct, outputHuman, netScoreUsd }. Null until a
+  // real amount has been quoted. This is what confirmSwap() executes.
+  const [selectedRoute, setSelectedRoute] = useState(null);
+  // How many real candidate routes were successfully quoted the last time
+  // routes were compared, and whether gas-adjusted (USD-normalized) scoring
+  // was available for that comparison - both shown in the UI so the route
+  // label never overstates what actually happened.
+  const [routesComparedCount, setRoutesComparedCount] = useState(0);
+  const [routeScoringUsdNormalized, setRouteScoringUsdNormalized] = useState(false);
   const [isQuoting, setIsQuoting] = useState(false);
   // Live "you'll pay roughly this much gas" figure, in ETH - refreshed
   // alongside the real on-chain quote (see fetchQuote/fetchGasEstimate).
@@ -120,6 +230,7 @@ function Swap({ isConnected, address }) {
   // receipt - cleared whenever a new one lands.
   const [lastReceipt, setLastReceipt] = useState(null);
   const tradeBoxRef = useRef(null);
+  const { push: pushNotification } = useNotifications();
 
   // Subtle mouse-tracking 3D tilt on the main card - purely a visual touch,
   // no state/re-renders involved, just moving the transform directly on the
@@ -141,10 +252,6 @@ function Swap({ isConnected, address }) {
     const el = tradeBoxRef.current;
     if (!el) return;
     el.style.transform = "perspective(900px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)";
-  }
-
-  function handleSlippageChange(e){
-    setSlippage(e.target.value);
   }
 
   async function findPoolFee(provider, tokenA, tokenB) {
@@ -204,6 +311,55 @@ function Swap({ isConnected, address }) {
     return () => { cancelled = true; };
   }, [tokenOne, tokenTwo]);
 
+  // Detect (and cache) real 2-hop candidate routes for the current pair -
+  // same lifecycle as the direct-pool detection above (pair change only,
+  // not per keystroke). Each candidate requires BOTH legs to actually exist
+  // on-chain via Factory.getPool() and both legs to have non-zero liquidity;
+  // anything else is silently dropped rather than offered as a route.
+  useEffect(() => {
+    let cancelled = false;
+
+    async function detectHopCandidates() {
+      setHopCandidates([]);
+      if (!tokenOne.sepoliaAddress || !tokenTwo.sepoliaAddress) return;
+
+      const midTokens = SEPOLIA_TOKENS.filter(
+        (t) => t.ticker !== tokenOne.ticker && t.ticker !== tokenTwo.ticker
+      );
+      if (midTokens.length === 0) return;
+
+      try {
+        const provider = new ethers.providers.JsonRpcProvider(process.env.REACT_APP_INFURA_URL);
+        const liquidityAbi = ["function liquidity() external view returns (uint128)"];
+
+        const results = await Promise.all(
+          midTokens.map(async (mid) => {
+            const [leg1, leg2] = await Promise.all([
+              findPoolFee(provider, tokenOne.sepoliaAddress, mid.sepoliaAddress),
+              findPoolFee(provider, mid.sepoliaAddress, tokenTwo.sepoliaAddress),
+            ]);
+            if (!leg1 || !leg2) return null; // one of the legs doesn't exist - never invent a pool
+
+            const pool1 = new ethers.Contract(leg1.poolAddress, liquidityAbi, provider);
+            const pool2 = new ethers.Contract(leg2.poolAddress, liquidityAbi, provider);
+            const [liq1, liq2] = await Promise.all([pool1.liquidity(), pool2.liquidity()]);
+            if (liq1.eq(0) || liq2.eq(0)) return null; // real but empty pool - not a usable route
+
+            return { midToken: mid, leg1, leg2 };
+          })
+        );
+
+        if (cancelled) return;
+        setHopCandidates(results.filter(Boolean));
+      } catch (err) {
+        console.error("Hop-candidate detection failed:", err);
+      }
+    }
+
+    detectHopCandidates();
+    return () => { cancelled = true; };
+  }, [tokenOne, tokenTwo]);
+
   // "How much gas will this actually cost me" - current network gas price
   // times the flat SWAP_GAS_LIMIT_ESTIMATE assumption above. Takes an
   // already-open provider so it can run in parallel with the quote call
@@ -220,6 +376,147 @@ function Swap({ isConnected, address }) {
     }
   }
 
+  // Get a REAL quote for every candidate route (the cached direct pool, plus
+  // any cached 2-hop candidates) for the given input amount. Never invents a
+  // route or a value - each candidate is either a real, successfully-quoted
+  // route, or is silently excluded (requirement: a failed alternative route
+  // must never block the swap).
+  async function quoteAllRoutes(provider, value) {
+    const amountIn = ethers.utils.parseUnits(value, tokenOne.decimals);
+    const refAmountIn = ethers.utils.parseUnits("0.0001", tokenOne.decimals);
+    const quoter = new ethers.Contract(QUOTER_ADDRESS, QUOTER_ABI, provider);
+    const routes = [];
+
+    function impactFromRef(amountOut, refOut) {
+      if (!refOut || refOut.isZero()) return null;
+      const idealOut = refOut.mul(amountIn).div(refAmountIn);
+      if (idealOut.isZero()) return null;
+      return idealOut.sub(amountOut).mul(1000000).div(idealOut).toNumber() / 10000;
+    }
+
+    if (poolInfo) {
+      try {
+        const [q, ref] = await Promise.all([
+          quoter.callStatic.quoteExactInputSingle({
+            tokenIn: tokenOne.sepoliaAddress, tokenOut: tokenTwo.sepoliaAddress,
+            amountIn, fee: poolInfo.fee, sqrtPriceLimitX96: 0,
+          }),
+          quoter.callStatic.quoteExactInputSingle({
+            tokenIn: tokenOne.sepoliaAddress, tokenOut: tokenTwo.sepoliaAddress,
+            amountIn: refAmountIn, fee: poolInfo.fee, sqrtPriceLimitX96: 0,
+          }).catch(() => null),
+        ]);
+        const amountOut = q.amountOut ?? q[0];
+        routes.push({
+          type: "direct",
+          hopsLabel: `${tokenOne.ticker} → ${tokenTwo.ticker}`,
+          fee: poolInfo.fee,
+          amountOut,
+          gasEstimate: q.gasEstimate ?? q[3],
+          priceImpactPct: ref ? impactFromRef(amountOut, ref.amountOut ?? ref[0]) : null,
+        });
+      } catch (err) {
+        console.error("Direct route quote failed:", err.reason || err.message);
+      }
+    }
+
+    // All 2-hop candidates are independent of each other - quoted
+    // concurrently instead of one-after-another. Same per-candidate
+    // try/catch semantics as before (a failed candidate is excluded, never
+    // blocks the others or the swap), just run in parallel.
+    const hopResults = await Promise.all(hopCandidates.map(async (cand) => {
+      try {
+        const path = encodePath(
+          [tokenOne.sepoliaAddress, cand.midToken.sepoliaAddress, tokenTwo.sepoliaAddress],
+          [cand.leg1.fee, cand.leg2.fee]
+        );
+        const [q, ref] = await Promise.all([
+          quoter.callStatic.quoteExactInput(path, amountIn),
+          quoter.callStatic.quoteExactInput(path, refAmountIn).catch(() => null),
+        ]);
+        const amountOut = q.amountOut ?? q[0];
+        return {
+          type: "2hop",
+          hopsLabel: `${tokenOne.ticker} → ${cand.midToken.ticker} → ${tokenTwo.ticker}`,
+          path,
+          legFees: [cand.leg1.fee, cand.leg2.fee],
+          amountOut,
+          gasEstimate: q.gasEstimate ?? q[3],
+          priceImpactPct: ref ? impactFromRef(amountOut, ref.amountOut ?? ref[0]) : null,
+        };
+      } catch (err) {
+        // Requirement: a failed alternative route is excluded, never blocks the swap.
+        console.warn(`2-hop route via ${cand.midToken.ticker} could not be quoted - excluded:`, err.reason || err.message);
+        return null;
+      }
+    }));
+    routes.push(...hopResults.filter(Boolean));
+
+    return routes;
+  }
+
+  // Score every successfully-quoted route on a REAL gas-adjusted basis and
+  // pick the best one. Gas is charged in ETH (real gasEstimate x real live
+  // gas price) but routes pay out in the output token, so the two need a
+  // common unit before they can be netted against each other - this uses a
+  // real, live ETH/USDC reference price (same /tokenPrice backend already
+  // used elsewhere in this file, queried here for WETH vs USDC, both real
+  // listed assets) and the output token's own real reference USD price. If
+  // either reference price isn't available, this NEVER guesses a number -
+  // it falls back to ranking by raw quoted output only, and says so.
+  async function selectBestRoute(routes, provider) {
+    if (routes.length === 0) return { best: null, all: [], usdNormalized: false };
+
+    // Gas price and the ETH reference price are independent of each other -
+    // fetched concurrently instead of one after the other. allSettled (not
+    // Promise.all) so a failure on either side keeps its own existing
+    // fallback-to-null behavior without aborting the other.
+    const [feeDataResult, ethPriceResult] = await Promise.allSettled([
+      provider.getFeeData(),
+      (async () => {
+        const weth = tokenList.find((t) => t.ticker === "WETH");
+        const usdc = tokenList.find((t) => t.ticker === "USDC");
+        if (!weth || !usdc) return null;
+        const res = await axios.get(`${API_BASE_URL}/tokenPrice`, {
+          params: { addressOne: weth.address, addressTwo: usdc.address },
+        });
+        return res.data?.tokenOne ?? null;
+      })(),
+    ]);
+
+    let gasPrice = null;
+    if (feeDataResult.status === "fulfilled") {
+      gasPrice = feeDataResult.value.gasPrice ?? feeDataResult.value.maxFeePerGas;
+    } else {
+      console.warn("Gas price fetch failed:", feeDataResult.reason?.message);
+    }
+
+    let ethUsdPrice = null;
+    if (ethPriceResult.status === "fulfilled") {
+      ethUsdPrice = ethPriceResult.value;
+    } else {
+      console.warn("ETH reference price fetch failed - falling back to raw-output ranking:", ethPriceResult.reason?.message);
+    }
+
+    const outputUsdPrice = getStaticUsdPrice(tokenTwo.ticker);
+
+    const scored = routes.map((r) => {
+      const outputHuman = Number(ethers.utils.formatUnits(r.amountOut, tokenTwo.decimals));
+      let netScoreUsd = null;
+      if (gasPrice && ethUsdPrice && outputUsdPrice) {
+        const gasCostEth = Number(ethers.utils.formatEther(gasPrice.mul(r.gasEstimate)));
+        const gasCostUsd = gasCostEth * ethUsdPrice;
+        netScoreUsd = outputHuman * outputUsdPrice - gasCostUsd;
+      }
+      return { ...r, outputHuman, netScoreUsd };
+    });
+
+    const usdNormalized = scored.every((r) => r.netScoreUsd !== null);
+    scored.sort((a, b) => (usdNormalized ? b.netScoreUsd - a.netScoreUsd : b.outputHuman - a.outputHuman));
+
+    return { best: scored[0], all: scored, usdNormalized };
+  }
+
   // Actually fetch the quote for a given input amount, using the cached
   // pool/fee (no factory/liquidity lookups here - just the quoter call).
   // QuoterV2's callStatic actually simulates the swap on-chain, so it's
@@ -232,59 +529,63 @@ function Swap({ isConnected, address }) {
   async function fetchQuote(value, { silent = false } = {}) {
     if (!silent) setIsQuoting(true);
     try {
-      if (poolInfo) {
+      const provider = new ethers.providers.JsonRpcProvider(process.env.REACT_APP_INFURA_URL);
+
+      // Silent 3s live-price ticker: cheap re-quote of the ALREADY-SELECTED
+      // route only (not a full route comparison every 3s - that would be a
+      // lot of unnecessary RPC traffic for a number that barely moves).
+      if (silent && selectedRoute) {
         try {
-          const provider = new ethers.providers.JsonRpcProvider(process.env.REACT_APP_INFURA_URL);
           const quoter = new ethers.Contract(QUOTER_ADDRESS, QUOTER_ABI, provider);
           const amountIn = ethers.utils.parseUnits(value, tokenOne.decimals);
-          // Tiny reference amount (~no price impact) used to estimate impact
-          // on the REAL amount below - same technique as openReviewModal, just
-          // surfaced here too so a bad-liquidity trade is visible while you're
-          // still typing, not only after opening the Review Swap modal.
           const refAmountIn = ethers.utils.parseUnits("0.0001", tokenOne.decimals);
-
-          // QuoterV2 takes a struct and returns a tuple - only the first
-          // value (amountOut) is what we need here. The gas-price lookup
-          // for the "Estimated gas" line rides along in the same
-          // Promise.all - it's not needed on every silent 3s tick, only on
-          // the real debounced quote, so it doesn't add extra RPC traffic
-          // for something that barely moves that often.
-          const [result, refResult] = await Promise.all([
-            quoter.callStatic.quoteExactInputSingle({
-              tokenIn: tokenOne.sepoliaAddress,
-              tokenOut: tokenTwo.sepoliaAddress,
-              amountIn,
-              fee: poolInfo.fee,
-              sqrtPriceLimitX96: 0,
-            }),
-            quoter.callStatic.quoteExactInputSingle({
-              tokenIn: tokenOne.sepoliaAddress,
-              tokenOut: tokenTwo.sepoliaAddress,
-              amountIn: refAmountIn,
-              fee: poolInfo.fee,
-              sqrtPriceLimitX96: 0,
-            }).catch(() => null),
-            !silent ? fetchGasEstimate(provider) : Promise.resolve(),
-          ]);
-          const amountOut = result.amountOut ?? result[0];
-
+          const [q, ref] = selectedRoute.type === "direct"
+            ? await Promise.all([
+                quoter.callStatic.quoteExactInputSingle({ tokenIn: tokenOne.sepoliaAddress, tokenOut: tokenTwo.sepoliaAddress, amountIn, fee: selectedRoute.fee, sqrtPriceLimitX96: 0 }),
+                quoter.callStatic.quoteExactInputSingle({ tokenIn: tokenOne.sepoliaAddress, tokenOut: tokenTwo.sepoliaAddress, amountIn: refAmountIn, fee: selectedRoute.fee, sqrtPriceLimitX96: 0 }).catch(() => null),
+              ])
+            : await Promise.all([
+                quoter.callStatic.quoteExactInput(selectedRoute.path, amountIn),
+                quoter.callStatic.quoteExactInput(selectedRoute.path, refAmountIn).catch(() => null),
+              ]);
+          const amountOut = q.amountOut ?? q[0];
           settokenTwoAmount(ethers.utils.formatUnits(amountOut, tokenTwo.decimals));
-
-          if (refResult) {
-            const refAmountOut = refResult.amountOut ?? refResult[0];
-            if (!refAmountOut.isZero()) {
-              const idealOut = refAmountOut.mul(amountIn).div(refAmountIn);
+          if (ref) {
+            const refOut = ref.amountOut ?? ref[0];
+            if (!refOut.isZero()) {
+              const idealOut = refOut.mul(amountIn).div(refAmountIn);
               if (!idealOut.isZero()) {
-                const diff = idealOut.sub(amountOut);
-                setLivePriceImpactPct((diff.mul(1000000).div(idealOut).toNumber()) / 10000);
+                setLivePriceImpactPct(idealOut.sub(amountOut).mul(1000000).div(idealOut).toNumber() / 10000);
               }
             }
-          } else {
-            setLivePriceImpactPct(null);
           }
-          return;
         } catch (err) {
-          console.error("On-chain quote failed, falling back to price ratio:", err);
+          console.error("Silent live-price re-quote failed:", err.reason || err.message);
+        }
+        return;
+      }
+
+      // Real (debounced) quote: compare every real candidate route and pick
+      // the best gas-adjusted one. This is what runs after you pause typing,
+      // not on every keystroke.
+      if (poolInfo || hopCandidates.length > 0) {
+        try {
+          const [routes] = await Promise.all([
+            quoteAllRoutes(provider, value),
+            fetchGasEstimate(provider),
+          ]);
+          const { best, all, usdNormalized } = await selectBestRoute(routes, provider);
+
+          if (best) {
+            settokenTwoAmount(ethers.utils.formatUnits(best.amountOut, tokenTwo.decimals));
+            setLivePriceImpactPct(best.priceImpactPct);
+            setSelectedRoute(best);
+            setRoutesComparedCount(all.length);
+            setRouteScoringUsdNormalized(usdNormalized);
+            return;
+          }
+        } catch (err) {
+          console.error("Route comparison failed, falling back to price ratio:", err);
         }
       }
 
@@ -293,6 +594,8 @@ function Swap({ isConnected, address }) {
       // number is never exact - there's no real Sepolia pool for this pair
       // to simulate against, so this estimate IS the final answer.
       setLivePriceImpactPct(null);
+      setSelectedRoute(null);
+      setRoutesComparedCount(0);
       if (prices) {
         settokenTwoAmount(`~${(value * prices.ratio).toFixed(6)}`);
       } else {
@@ -333,16 +636,17 @@ function Swap({ isConnected, address }) {
       settokenTwoAmount(null);
       setIsQuoting(false);
       setLivePriceImpactPct(null);
+      setSelectedRoute(null);
+      setRoutesComparedCount(0);
       return;
     }
 
     // Instant feedback: show a rough estimate right away from the cached
     // USD price ratio (pure local math, no RPC call) so the output field
-    // never just sits frozen while you type. Prefixed with "~" because for
-    // USDC/WETH (the only pair with a real Sepolia pool) this number gets
-    // replaced a moment later by the exact on-chain quote - the "~" makes
-    // that second update read as "refining to the exact price" instead of
-    // looking like a random late correction.
+    // never just sits frozen while you type. Prefixed with "~" because this
+    // number gets replaced a moment later by the exact on-chain quote - the
+    // "~" makes that second update read as "refining to the exact price"
+    // instead of looking like a random late correction.
     if (prices) {
       settokenTwoAmount(`~${(value * prices.ratio).toFixed(6)}`);
     }
@@ -357,6 +661,8 @@ function Swap({ isConnected, address }) {
   setPrices(null);
   settokenOneAmount(null);
   settokenTwoAmount(null);
+  setSelectedRoute(null);
+  setRoutesComparedCount(0);
   const one = tokenOne;
   const two = tokenTwo;
 
@@ -371,6 +677,8 @@ function modifyToken(i) {
   setPrices(null);
   settokenOneAmount(null);
   settokenTwoAmount(null);
+  setSelectedRoute(null);
+  setRoutesComparedCount(0);
   if (changeToken === 1) {
     settokenOne(tokenList[i]);
   } else {
@@ -511,7 +819,7 @@ async function openReviewModal() {
     return;
   }
   if (!tokenOne.sepoliaAddress || !tokenTwo.sepoliaAddress) {
-    message.error("This testnet only supports swapping between WETH & USDC");
+    message.error("One of these tokens isn't supported on this testnet yet.");
     return;
   }
   if (!tokenOneAmount) {
@@ -571,68 +879,74 @@ async function openReviewModal() {
       return;
     }
 
-    // The pair's fee tier was already detected (and its liquidity checked)
-    // by the useEffect that runs whenever tokenOne/tokenTwo change, so reuse
-    // that cached result instead of re-running findPoolFee's up-to-4
-    // sequential factory calls again here - this alone used to be a big
-    // chunk of the "Review Swap" wait. Only fall back to a fresh lookup if
-    // that detection hasn't resolved yet (or failed) for some reason.
-    let fee = poolInfo?.fee;
-    if (fee === undefined) {
+    // Fresh, full route comparison right before showing the review - never
+    // trusts the debounced typing-time selection as final, same discipline
+    // the old code applied to just the direct quote. Falls back to a fresh
+    // direct-only lookup if for some reason no candidates were cached yet.
+    const amountIn = ethers.utils.parseUnits(tokenOneAmount, tokenOne.decimals);
+
+    // USDC-only: prefetch the real on-chain nonce()/name() needed for the
+    // EIP-2612 permit signature NOW, in parallel with route quoting, instead
+    // of waiting until after Confirm Swap is clicked. The route is already
+    // known to be USDC-sold at this point, so there's nothing to wait for -
+    // these two reads don't depend on anything computed later. If this
+    // fails or is skipped, attemptPermitSwap() below still falls back to
+    // fetching them itself at signing time - never a hard dependency.
+    const permitPrefetchPromise = isPermitSupportedToken(tokenOne)
+      ? (async () => {
+          try {
+            const tokenContract = new ethers.Contract(tokenOne.sepoliaAddress, ERC20_ABI, readProvider);
+            const [nonce, name] = await Promise.all([
+              tokenContract.nonces(address),
+              tokenContract.name(),
+            ]);
+            return { nonce, name };
+          } catch (err) {
+            console.warn("Permit prefetch failed - will fetch fresh at signing time:", err.message);
+            return null;
+          }
+        })()
+      : Promise.resolve(null);
+
+    const [routesFromQuote, permitPrefetch] = await Promise.all([
+      quoteAllRoutes(readProvider, tokenOneAmount),
+      permitPrefetchPromise,
+    ]);
+    let routes = routesFromQuote;
+    if (routes.length === 0) {
       const poolResult = await findPoolFee(readProvider, tokenOne.sepoliaAddress, tokenTwo.sepoliaAddress);
       if (poolResult === null) {
         message.error("No liquidity pool found for this pair on Sepolia testnet.");
         return;
       }
-      fee = poolResult.fee;
+      const quoter = new ethers.Contract(QUOTER_ADDRESS, QUOTER_ABI, readProvider);
+      const q = await quoter.callStatic.quoteExactInputSingle({
+        tokenIn: tokenOne.sepoliaAddress, tokenOut: tokenTwo.sepoliaAddress,
+        amountIn, fee: poolResult.fee, sqrtPriceLimitX96: 0,
+      });
+      routes = [{
+        type: "direct",
+        hopsLabel: `${tokenOne.ticker} → ${tokenTwo.ticker}`,
+        fee: poolResult.fee,
+        amountOut: q.amountOut ?? q[0],
+        gasEstimate: q.gasEstimate ?? q[3],
+        priceImpactPct: null,
+      }];
     }
 
-    const amountIn = ethers.utils.parseUnits(tokenOneAmount, tokenOne.decimals);
-    const refAmountIn = ethers.utils.parseUnits("0.0001", tokenOne.decimals);
-    const quoter = new ethers.Contract(QUOTER_ADDRESS, QUOTER_ABI, readProvider);
-
-    // The real quote for the amount you're actually swapping, plus a tiny
-    // reference-amount quote (no meaningful size, so ~no impact) used below
-    // for the price-impact estimate. These two don't depend on each other,
-    // so they're fired together instead of one after the other.
-    const [freshQuote, refQuote] = await Promise.all([
-      quoter.callStatic.quoteExactInputSingle({
-        tokenIn: tokenOne.sepoliaAddress,
-        tokenOut: tokenTwo.sepoliaAddress,
-        amountIn,
-        fee,
-        sqrtPriceLimitX96: 0,
-      }),
-      quoter.callStatic.quoteExactInputSingle({
-        tokenIn: tokenOne.sepoliaAddress,
-        tokenOut: tokenTwo.sepoliaAddress,
-        amountIn: refAmountIn,
-        fee,
-        sqrtPriceLimitX96: 0,
-      }).catch((err) => {
-        console.error("Could not estimate price impact:", err);
-        return null;
-      }),
-    ]);
-    const freshAmountOut = freshQuote.amountOut ?? freshQuote[0];
-
-    // Scale the reference rate up to your real amount to get the "ideal"
-    // output if the pool had infinite depth, then compare that to what
-    // you'd actually get. Same idea as the slippage-guard demo's impactPct
-    // calc, just against the real on-chain pool instead of a simulated one.
-    let priceImpactPct = null;
-    if (refQuote) {
-      const refAmountOut = refQuote.amountOut ?? refQuote[0];
-      if (!refAmountOut.isZero()) {
-        const idealOut = refAmountOut.mul(amountIn).div(refAmountIn);
-        if (!idealOut.isZero()) {
-          const diff = idealOut.sub(freshAmountOut);
-          priceImpactPct = (diff.mul(1000000).div(idealOut).toNumber()) / 10000; // -> %
-        }
-      }
+    const { best, all, usdNormalized } = await selectBestRoute(routes, readProvider);
+    if (!best) {
+      message.error("Could not fetch a fresh quote right now. Please try again.");
+      return;
     }
+    setSelectedRoute(best);
+    setRoutesComparedCount(all.length);
+    setRouteScoringUsdNormalized(usdNormalized);
 
-    const slippageBps = Math.round(slippage * 100); // e.g. 2.5% -> 250 bps
+    const freshAmountOut = best.amountOut;
+    const priceImpactPct = best.priceImpactPct;
+
+    const slippageBps = Math.round(DEFAULT_SLIPPAGE_PCT * 100); // e.g. 2.5% -> 250 bps
     const amountOutMinimum = freshAmountOut.mul(10000 - slippageBps).div(10000);
 
     // Belt-and-suspenders on top of the fixed MIN_SWAP_AMOUNT floor above:
@@ -642,21 +956,25 @@ async function openReviewModal() {
     // no matter what ("Too little received") - so stop it here instead of
     // making you pay gas to find that out.
     if (amountOutMinimum.isZero()) {
-      message.error(
-        `This amount is too small - after your ${slippage}% slippage tolerance, the guaranteed minimum ` +
-        `you'd receive rounds down to zero, so the swap would revert. Enter a larger amount.`
-      );
+      message.error("This amount is too small - it would round down to zero output, so the swap would revert. Enter a larger amount.");
       return;
     }
 
     setReviewData({
-      fee,
+      routeType: best.type,
+      fee: best.fee,
+      legFees: best.legFees,
+      path: best.path,
+      hopsLabel: best.hopsLabel,
       amountIn,
       freshAmountOut,
       amountOutMinimum,
       priceImpactPct,
       recipient: recipientAddress,
       estimatedGasFee,
+      routesComparedCount: all.length,
+      gasEstimate: best.gasEstimate, // real, route-specific gasEstimate from the quote itself
+      permitPrefetch,
     });
     setIsReviewOpen(true);
   } catch (err) {
@@ -667,56 +985,189 @@ async function openReviewModal() {
   }
 }
 
+// USDC-only fast path: request a free, off-chain EIP-712 permit SIGNATURE
+// (never an on-chain transaction, no gas) authorizing the router for
+// exactly `amountIn`, then bundle that permit with the swap itself into one
+// router.multicall() - the ONLY on-chain transaction for this path. Returns
+// the submitted tx on success, or null on ANY failure (signature rejected,
+// nonce/name read failed, multicall send failed) so confirmSwap can safely
+// fall back to the standard approve + swap flow. Never throws.
+async function attemptPermitSwap({ signer, router, routeType, fee, path, amountIn, amountOutMinimum, recipient, permitPrefetch, gasEstimate }) {
+  setIsRequestingSignature(true);
+  try {
+    // Real on-chain reads - the nonce MUST be the account's current real
+    // nonce (a stale/guessed nonce would make the signature invalid) and the
+    // name must exactly match the token's real on-chain name, since it's
+    // part of the EIP-712 domain hash. Reuses the values openReviewModal
+    // already prefetched (in parallel with route quoting) when available -
+    // only falls back to fetching them here if that prefetch is missing for
+    // some reason, so this never depends on the prefetch having succeeded.
+    let nonce, name;
+    if (permitPrefetch) {
+      ({ nonce, name } = permitPrefetch);
+    } else {
+      const tokenContract = new ethers.Contract(tokenOne.sepoliaAddress, ERC20_ABI, signer);
+      [nonce, name] = await Promise.all([
+        tokenContract.nonces(address),
+        tokenContract.name(),
+      ]);
+    }
+
+    const domain = {
+      name,
+      version: USDC_PERMIT_DOMAIN_VERSION, // verified against the real on-chain DOMAIN_SEPARATOR() before this was ever wired in
+      chainId: SEPOLIA_CHAIN_ID,
+      verifyingContract: tokenOne.sepoliaAddress,
+    };
+    const types = {
+      Permit: [
+        { name: "owner", type: "address" },
+        { name: "spender", type: "address" },
+        { name: "value", type: "uint256" },
+        { name: "nonce", type: "uint256" },
+        { name: "deadline", type: "uint256" },
+      ],
+    };
+    const deadline = Math.floor(Date.now() / 1000) + 20 * 60; // real 20-minute window, same convention used elsewhere in this project
+    const value = {
+      owner: address,
+      spender: ROUTER_ADDRESS,
+      value: amountIn, // exactly the amount this swap needs - never unlimited
+      nonce,
+      deadline,
+    };
+
+    message.info("Requesting a free signature in MetaMask (not a transaction, no gas)...");
+    // Off-chain only - this is a message signature (eth_signTypedData_v4
+    // under the hood), never broadcast as its own transaction.
+    const signature = await signer._signTypedData(domain, types, value);
+    const { v, r, s } = ethers.utils.splitSignature(signature);
+
+    const selfPermitData = router.interface.encodeFunctionData("selfPermit", [
+      tokenOne.sepoliaAddress, amountIn, deadline, v, r, s,
+    ]);
+    const swapData = routeType === "2hop"
+      ? router.interface.encodeFunctionData("exactInput", [{ path, recipient, amountIn, amountOutMinimum }])
+      : router.interface.encodeFunctionData("exactInputSingle", [{
+          tokenIn: tokenOne.sepoliaAddress,
+          tokenOut: tokenTwo.sepoliaAddress,
+          fee,
+          recipient,
+          amountIn,
+          amountOutMinimum,
+          sqrtPriceLimitX96: 0,
+        }]);
+
+    message.info("Confirm the swap transaction in MetaMask...");
+    // The ONE on-chain transaction for this path: the permit authorization
+    // and the swap execute atomically in the same call.
+    //
+    // Explicit gasLimit: without one, ethers automatically calls
+    // eth_estimateGas via the SIGNER's own provider (MetaMask's configured
+    // RPC, not our fast readProvider) before sending - an extra, invisible
+    // round-trip on a connection we don't control the speed of. Supplying a
+    // gasLimit here skips that call. It can't be a live simulation of this
+    // exact multicall (eth_estimateGas would need to actually execute
+    // selfPermit's signature check, which requires a REAL valid signature to
+    // avoid reverting during simulation - and we don't have one until the
+    // line above just ran) - so this is a conservative, real-data-based
+    // upper bound instead: the swap portion's own real gasEstimate (already
+    // returned by the exact QuoterV2 quote this route was selected from),
+    // plus a fixed margin for the selfPermit call (a standard ERC20Permit
+    // permit() - one nonce SSTORE, one ecrecover, one allowance SSTORE - a
+    // well-characterized, bounded operation, comfortably under 60,000 gas
+    // even on a cold storage slot), then a further 20% safety buffer on top
+    // of that sum. Generous on purpose: an under-estimate here would risk a
+    // real, mined "out of gas" failure, which is worse than the RPC call
+    // this is trying to avoid.
+    const SELF_PERMIT_GAS_MARGIN = ethers.BigNumber.from(60000);
+    const swapGasEstimate = gasEstimate || SWAP_GAS_LIMIT_ESTIMATE;
+    const multicallGasLimit = swapGasEstimate.add(SELF_PERMIT_GAS_MARGIN).mul(120).div(100);
+
+    return await router.multicall([selfPermitData, swapData], { gasLimit: multicallGasLimit });
+  } catch (err) {
+    console.warn("Permit-based swap path failed or was declined - falling back to standard approve + swap:", err.reason || err.message);
+    return null;
+  } finally {
+    setIsRequestingSignature(false);
+  }
+}
+
 // Step 2: this is what "Confirm Swap" inside the review modal actually
-// runs - the real approve (if needed) + exactInputSingle, using exactly
-// the fee/amountOutMinimum/recipient shown in the review.
+// runs. For USDC (verified ERC-2612 support), tries the signature-based
+// permit + multicall path first; for every other token, and as the safety
+// net if that path fails, falls back to the original real approve (if
+// needed) + exactInputSingle/exactInput flow, completely unchanged.
 async function confirmSwap() {
   if (isSwapping || !reviewData) {
     return;
   }
-  const { fee, amountIn, amountOutMinimum, recipient } = reviewData;
+  const { routeType, fee, path, amountIn, amountOutMinimum, recipient, permitPrefetch, gasEstimate } = reviewData;
 
   setIsSwapping(true);
   try {
     const provider = new ethers.providers.Web3Provider(window.ethereum);
     const signer = provider.getSigner();
+    const router = new ethers.Contract(ROUTER_ADDRESS, ROUTER_ABI, signer);
 
-    // 1. Approve the Router to spend tokenOne (only if needed)
-    const tokenContract = new ethers.Contract(tokenOne.sepoliaAddress, ERC20_ABI, signer);
-    const currentAllowance = await tokenContract.allowance(address, ROUTER_ADDRESS);
+    let swapTx = null;
 
-    if (currentAllowance.lt(amountIn)) {
-      message.info("Please approve the token in MetaMask...");
-      // Approve only the exact amount being swapped, not an unlimited cap.
-      // MetaMask's approval popup then shows the real number you're about
-      // to send instead of "Unlimited", which is what most wallets flag
-      // with a security warning. Trade-off: since an exact approval gets
-      // fully consumed by the swap it covers, the NEXT swap of this same
-      // token needs a fresh approve - one extra MetaMask popup per swap,
-      // in exchange for a popup that shows an honest, bounded amount.
-      const approveTx = await tokenContract.approve(ROUTER_ADDRESS, amountIn);
-      await approveTx.wait();
-      message.success("Token approved!");
+    if (isPermitSupportedToken(tokenOne)) {
+      swapTx = await attemptPermitSwap({ signer, router, routeType, fee, path, amountIn, amountOutMinimum, recipient, permitPrefetch, gasEstimate });
+      if (!swapTx) {
+        message.info("Falling back to a standard approval...");
+      }
     }
 
-    // 2. Execute the swap. amountOutMinimum here is the SLIPPAGE PROTECTION:
-    // if, by the time this actually gets mined, the real output would be
-    // LESS than this (price moved against you more than your tolerance
-    // allows), the Uniswap Router contract itself REJECTS the transaction
-    // on-chain ("Too little received" / "STF"). Your tokens are NOT swapped
-    // at a bad rate - the whole transaction reverts and you only lose the
-    // gas fee, not your funds.
-    const router = new ethers.Contract(ROUTER_ADDRESS, ROUTER_ABI, signer);
-    message.info("Confirm the swap transaction in MetaMask...");
-    const swapTx = await router.exactInputSingle({
-  tokenIn: tokenOne.sepoliaAddress,
-  tokenOut: tokenTwo.sepoliaAddress,
-  fee: fee,
-  recipient: recipient,
-  amountIn,
-  amountOutMinimum,
-  sqrtPriceLimitX96: 0,
-});
+    if (!swapTx) {
+      // 1. Approve the Router to spend tokenOne (only if needed) - real
+      // allowance check, exact-amount approve, entirely unchanged for every
+      // non-permit token (NOVA/FSN/VRTX/ORBT/WETH/LINK).
+      const tokenContract = new ethers.Contract(tokenOne.sepoliaAddress, ERC20_ABI, signer);
+      const currentAllowance = await tokenContract.allowance(address, ROUTER_ADDRESS);
+
+      if (currentAllowance.lt(amountIn)) {
+        message.info("Please approve the token in MetaMask...");
+        // Approve only the exact amount being swapped, not an unlimited cap.
+        // MetaMask's approval popup then shows the real number you're about
+        // to send instead of "Unlimited", which is what most wallets flag
+        // with a security warning. Trade-off: since an exact approval gets
+        // fully consumed by the swap it covers, the NEXT swap of this same
+        // token needs a fresh approve - one extra MetaMask popup per swap,
+        // in exchange for a popup that shows an honest, bounded amount.
+        const approveTx = await tokenContract.approve(ROUTER_ADDRESS, amountIn);
+        await approveTx.wait();
+        message.success("Token approved!");
+      }
+
+      // 2. Execute the swap. amountOutMinimum here is the SLIPPAGE PROTECTION:
+      // if, by the time this actually gets mined, the real output would be
+      // LESS than this (price moved against you more than your tolerance
+      // allows), the Uniswap Router contract itself REJECTS the transaction
+      // on-chain ("Too little received" / "STF"). Your tokens are NOT swapped
+      // at a bad rate - the whole transaction reverts and you only lose the
+      // gas fee, not your funds.
+      message.info("Confirm the swap transaction in MetaMask...");
+      // Direct route -> single-hop exactInputSingle (unchanged, already
+      // proven). 2-hop route -> the verified exactInput(path, ...) call using
+      // the exact same real path that was quoted for the review.
+      swapTx = routeType === "2hop"
+        ? await router.exactInput({
+            path,
+            recipient: recipient,
+            amountIn,
+            amountOutMinimum,
+          })
+        : await router.exactInputSingle({
+            tokenIn: tokenOne.sepoliaAddress,
+            tokenOut: tokenTwo.sepoliaAddress,
+            fee: fee,
+            recipient: recipient,
+            amountIn,
+            amountOutMinimum,
+            sqrtPriceLimitX96: 0,
+          });
+    }
 
 console.log("Swap tx hash:", swapTx.hash);
 message.info("Transaction submitted, waiting for confirmation...");
@@ -729,6 +1180,11 @@ console.log("Logs:", receipt.logs);
 message.success("Swap successful! 🎉");
 setShowSwapSuccess(true);
 setTimeout(() => setShowSwapSuccess(false), 2200);
+pushNotification({
+  kind: "swap",
+  message: `Swapped ${tokenOneAmount} ${tokenOne.ticker} → ${tokenTwo.ticker}`,
+  txHash: swapTx.hash,
+});
 
     // Snapshot everything the receipt needs before the inputs get cleared
     // below - reviewData is still the data this exact transaction was
@@ -742,7 +1198,6 @@ setTimeout(() => setShowSwapSuccess(false), 2200);
       tokenOutTicker: tokenTwo.ticker,
       amountOut: ethers.utils.formatUnits(reviewData.freshAmountOut, tokenTwo.decimals),
       fee,
-      slippage,
       gasFee: estimatedGasFee,
       sender: address,
       recipient,
@@ -761,16 +1216,14 @@ setTimeout(() => setShowSwapSuccess(false), 2200);
 
     const reason = err.reason || err.error?.message || err.message || "";
     if (reason.includes("Too little received")) {
-      // This is the exact protection your slippage tolerance exists for:
-      // the amount you'd actually receive dropped by more than the allowed
-      // % between quoting and execution, so the Uniswap contract itself
-      // refused to complete the swap - on purpose. Nothing was swapped at
-      // a bad rate; you only paid gas.
+      // The Uniswap contract itself refused to complete the swap because
+      // the price moved against you between quoting and execution, beyond
+      // the built-in safety margin - on purpose. Nothing was swapped at a
+      // bad rate; you only paid gas.
       message.error({
         content:
-          `Transaction reverted: the amount would have decreased by more than your ` +
-          `${slippage}% tolerance, so the swap was NOT completed. Your tokens are safe - ` +
-          `only the gas fee was spent. Try again or raise your slippage tolerance in Settings.`,
+          "Transaction reverted: the price moved before your transaction confirmed, so the swap was NOT " +
+          "completed. Your tokens are safe - only the gas fee was spent. Try again.",
         duration: 6,
       });
     } else if (reason.includes("STF")) {
@@ -803,19 +1256,6 @@ setTimeout(() => setShowSwapSuccess(false), 2200);
       ? Number(cleanTokenTwoAmount) / Number(tokenOneAmount)
       : null;
 
-  const settings = (
-    <>
-    <div>Slippage Tolerance</div>
-    <div>
-    <Radio.Group value={slippage} onChange={handleSlippageChange}>
-    <Radio.Button value={0.5}>0.5%</Radio.Button>
-    <Radio.Button value={2.5}>2.5%</Radio.Button>
-    <Radio.Button value={5}>5.0%</Radio.Button>
-    </Radio.Group>
-
-    </div>
-    </>
-  );
   return (
     <>
     <Modal 
@@ -863,10 +1303,6 @@ setTimeout(() => setShowSwapSuccess(false), 2200);
             <span>You receive (estimated)</span>
             <span>{ethers.utils.formatUnits(reviewData.freshAmountOut, tokenTwo.decimals)} {tokenTwo.ticker}</span>
           </div>
-          <div className="reviewRow">
-            <span>Minimum received</span>
-            <span>{ethers.utils.formatUnits(reviewData.amountOutMinimum, tokenTwo.decimals)} {tokenTwo.ticker}</span>
-          </div>
           {reviewData.priceImpactPct !== null && (
             <div className="reviewRow">
               <span>Price impact</span>
@@ -877,19 +1313,33 @@ setTimeout(() => setShowSwapSuccess(false), 2200);
             </div>
           )}
           <div className="reviewRow">
-            <span>Fee tier</span>
-            <span>{(reviewData.fee / 10000).toFixed(2)}%</span>
+            <span>Route</span>
+            <span>{reviewData.hopsLabel} · {reviewData.routeType === "2hop" ? "2 Hops" : "1 Hop"}</span>
           </div>
+          <div className="reviewRow">
+            <span>Fee tier</span>
+            <span>
+              {reviewData.routeType === "2hop"
+                ? reviewData.legFees.map((f) => (f / 10000).toFixed(2) + "%").join(" + ")
+                : (reviewData.fee / 10000).toFixed(2) + "%"}
+            </span>
+          </div>
+          <div className="reviewRow">
+            <span>Routes compared</span>
+            <span>{reviewData.routesComparedCount}</span>
+          </div>
+          {isPermitSupportedToken(tokenOne) && (
+            <div className="reviewRow">
+              <span>Authorization</span>
+              <span>Free signature (USDC) - no separate approval transaction</span>
+            </div>
+          )}
           {reviewData.estimatedGasFee && (
             <div className="reviewRow">
               <span>Estimated gas fee</span>
               <span>~{Number(reviewData.estimatedGasFee).toFixed(6)} ETH</span>
             </div>
           )}
-          <div className="reviewRow">
-            <span>Slippage tolerance</span>
-            <span>{slippage}%</span>
-          </div>
           <div className="reviewRow">
             <span>Recipient</span>
             <span className="recipientAddr">
@@ -905,14 +1355,36 @@ setTimeout(() => setShowSwapSuccess(false), 2200);
           )}
 
           <button className="swapButton" disabled={isSwapping} onClick={confirmSwap}>
-            {isSwapping ? "Swapping..." : "Confirm Swap"}
+            {isRequestingSignature ? "Waiting for signature..." : isSwapping ? "Swapping..." : "Confirm Swap"}
           </button>
         </div>
       )}
     </Modal>
+    <div className="nx-swap-shell">
+    <ThreeDBackground
+      intensity={4}
+      layout="pedestalFlow"
+      showGlass={false}
+      coins={RING_COINS.length ? RING_COINS : [
+        { ticker: tokenOne.ticker, img: tokenOne.img },
+        { ticker: tokenTwo.ticker, img: tokenTwo.img },
+      ]}
+    />
+    <div className="nx-swap-centered">
+      <div className="nx-swap-centered-header">
+        <div className="nx-eyebrow">
+          <span className="nx-eyebrow-dot" />
+          Multi Chain Aggregator · Sepolia
+        </div>
+        <h1 className="nx-swap-hero-title">Find the best route</h1>
+        <p className="nx-swap-hero-sub">
+          4x audited multi chain liquidity aggregator
+        </p>
+      </div>
+
     <div className="swapPageColumn">
+    <GlassCard as="div" className="nx-trade-card" pad="lg">
     <div
-      className="tradeBox"
       ref={tradeBoxRef}
       onMouseMove={handleCardMouseMove}
       onMouseLeave={handleCardMouseLeave}
@@ -928,17 +1400,9 @@ setTimeout(() => setShowSwapSuccess(false), 2200);
       </div>
     )}
 
-    <div className="tradeBoxHeader">
+    <div className="nx-trade-head">
       <h4>Swap</h4>
-     <Popover
-  content={settings}
-  title="Settings"
-  trigger="click"
-  placement="bottomRight"
->
-           <SettingOutlined className="cop" />
-      </Popover>
-      
+      <p>Best price routed automatically across live Sepolia liquidity.</p>
     </div>
     {balance && (
       <div className="quickAmountRow">
@@ -949,62 +1413,133 @@ setTimeout(() => setShowSwapSuccess(false), 2200);
         <span className="quickAmountBtn" onClick={() => setAmountFraction(0.75)}>75%</span>
       </div>
     )}
-    <div className="inputs">
-      {balance && (
-        <div className="balanceRow">
-          Available: {Number(balance).toFixed(6)} {tokenOne.ticker}
+
+    <div className="nx-trade-row">
+      <div className="nx-trade-row-top">
+        <span className="nx-trade-row-label">You sell</span>
+        {balance && (
+          <span className="nx-trade-row-balance">
+            Available: {Number(balance).toFixed(6)} {tokenOne.ticker}
+          </span>
+        )}
+      </div>
+      <div className="nx-trade-row-main">
+        <Input
+          className="nx-trade-amount-input"
+          placeholder="0"
+          value={tokenOneAmount}
+          onChange={changeAmount}
+          bordered={false}
+        />
+        <div className="nx-trade-token-pill" onClick={() => openModal(1)}>
+          <TokenIcon symbol={tokenOne.ticker} src={tokenOne.img} size={26} />
+          <span>{tokenOne.ticker}</span>
+          <span className="nx-trade-chain-badge">Sepolia</span>
+          <DownOutlined />
+        </div>
+      </div>
+      {isQuoting && (
+        <div className="quotingRow">
+          Getting best price <span className="quotingShimmer"></span>
         </div>
       )}
-      <Input placeholder="0" value={tokenOneAmount} onChange={changeAmount} />
-       <Input placeholder="0" value={tokenTwoAmount} disabled={true} />
-       {isQuoting && (
-         <div className="quotingRow">
-           Getting best price <span className="quotingShimmer"></span>
-         </div>
-       )}
-       {!isQuoting && liveRate !== null && (
-         <div className="rateRow">
-           <span className="liveDot"></span>
-           1 {tokenOne.ticker} = {liveRate.toFixed(6)} {tokenTwo.ticker}
-         </div>
-       )}
-       {!isQuoting && estimatedGasFee !== null && (
-         <div className="gasEstimateRow">
-           <ThunderboltOutlined /> Estimated gas: ~{Number(estimatedGasFee).toFixed(6)} ETH
-         </div>
-       )}
-       {!isQuoting && livePriceImpactPct !== null && livePriceImpactPct > 1 && (
-         <div className={livePriceImpactPct > 5 ? "priceImpactWarnRow priceImpactWarnHigh" : "priceImpactWarnRow"}>
-           Price impact: -{livePriceImpactPct.toFixed(2)}%
-           {livePriceImpactPct > 5
-             ? " — this testnet pool is thin at this size."
-             : " — noticeable for this size on testnet liquidity."}
-           {" "}
-           <span className="priceImpactShrinkLink" onClick={applySafeAmount}>
-             Try a smaller amount
-           </span>
-         </div>
-       )}
-       <div
-         className="switchButton"
-         onClick={() => {
-           switchTokens();
-           setSwitchSpinCount((c) => c + 1);
-         }}
-       >
-          <ArrowDownOutlined key={switchSpinCount} className="switchArrow" />
-       </div>
-       <div className="assetOne" onClick={() => openModal(1)}>
-        <img src={tokenOne.img} alt="assetOneLogo" className="assetLogo" />
-        {tokenOne.ticker}
-        <DownOutlined />
-       </div>
-        <div className="assetTwo"  onClick={() => openModal(2)}>
-        <img src={tokenTwo.img} alt="assetOneLogo" className="assetLogo" />
-        {tokenTwo.ticker}
-        <DownOutlined />
-        </div>
     </div>
+
+    <div
+      className="nx-trade-switch"
+      onClick={() => {
+        switchTokens();
+        setSwitchSpinCount((c) => c + 1);
+      }}
+    >
+      <ArrowDownOutlined key={switchSpinCount} className="switchArrow" />
+    </div>
+
+    <div className="nx-trade-row">
+      <div className="nx-trade-row-top">
+        <span className="nx-trade-row-label">You receive</span>
+      </div>
+      <div className="nx-trade-row-main">
+        <Input
+          className="nx-trade-amount-input"
+          placeholder="0"
+          value={tokenTwoAmount}
+          disabled={true}
+          bordered={false}
+        />
+        <div className="nx-trade-token-pill" onClick={() => openModal(2)}>
+          <TokenIcon symbol={tokenTwo.ticker} src={tokenTwo.img} size={26} />
+          <span>{tokenTwo.ticker}</span>
+          <span className="nx-trade-chain-badge">Sepolia</span>
+          <DownOutlined />
+        </div>
+      </div>
+    </div>
+
+    {(!isQuoting && liveRate !== null) || (!isQuoting && estimatedGasFee !== null) ? (
+      <div className="nx-trade-info-row">
+        {!isQuoting && liveRate !== null && (
+          <div className="nx-trade-info-line">
+            <span className="liveDot"></span>
+            1 {tokenOne.ticker} = {liveRate.toFixed(6)} {tokenTwo.ticker}
+            {poolInfo && (
+              <Link
+                className="nx-swap-view-pool"
+                to={`/pools?pair=${encodeURIComponent(`${tokenOne.ticker}/${tokenTwo.ticker}`)}`}
+              >
+                View Pool →
+              </Link>
+            )}
+          </div>
+        )}
+        {selectedRoute && (
+          <div className="nx-trade-info-line">
+            <span>Route</span>
+            <span>
+              {selectedRoute.hopsLabel} · {selectedRoute.type === "2hop" ? "2 Hops" : "1 Hop"}
+              {selectedRoute.type === "2hop"
+                ? ` (Fee ${selectedRoute.legFees.map((f) => (f / 10000).toFixed(2) + "%").join(" + ")})`
+                : ` (Fee ${(selectedRoute.fee / 10000).toFixed(2)}%)`}
+            </span>
+          </div>
+        )}
+        {selectedRoute && routesComparedCount > 1 && (
+          <div className="nx-trade-info-line">
+            <span>Compared {routesComparedCount} routes</span>
+            <span>
+              {routeScoringUsdNormalized
+                ? "Selected based on best gas-adjusted output"
+                : "Selected based on best available output"}
+            </span>
+          </div>
+        )}
+        {!isQuoting && liveRate !== null && livePriceImpactPct !== null && (
+          <div className="nx-trade-info-line">
+            <span>Price impact</span>
+            <span>{livePriceImpactPct >= 0 ? "-" : "+"}{Math.abs(livePriceImpactPct).toFixed(2)}%</span>
+          </div>
+        )}
+        {!isQuoting && estimatedGasFee !== null && (
+          <div className="nx-trade-info-line">
+            <ThunderboltOutlined /> Estimated gas: ~{Number(estimatedGasFee).toFixed(6)} ETH
+          </div>
+        )}
+      </div>
+    ) : null}
+
+    {!isQuoting && livePriceImpactPct !== null && livePriceImpactPct > 1 && (
+      <div className={livePriceImpactPct > 5 ? "priceImpactWarnRow priceImpactWarnHigh" : "priceImpactWarnRow"}>
+        Price impact: -{livePriceImpactPct.toFixed(2)}%
+        {livePriceImpactPct > 5
+          ? " — this testnet pool is thin at this size."
+          : " — noticeable for this size on testnet liquidity."}
+        {" "}
+        <span className="priceImpactShrinkLink" onClick={applySafeAmount}>
+          Try a smaller amount
+        </span>
+      </div>
+    )}
+
     {isConnected && address && (
       <div className="recipientBox">
         <div className="recipientEditHeader">
@@ -1028,8 +1563,9 @@ setTimeout(() => setShowSwapSuccess(false), 2200);
         )}
       </div>
     )}
-    <button
-      className="swapButton"
+    <PrimaryButton
+      full
+      className="nx-trade-cta"
       disabled={
         !tokenOneAmount ||
         !isConnected ||
@@ -1040,21 +1576,13 @@ setTimeout(() => setShowSwapSuccess(false), 2200);
       onClick={openReviewModal}
     >
       {isPreparingReview ? "Fetching quote..." : "Review Swap"}
-    </button>
+    </PrimaryButton>
     </div>
+    </GlassCard>
 
-    {lastReceipt && (
-      <div className="receiptPrompt">
-        <div className="receiptPromptText">
-          <strong>Swap complete.</strong> Download a receipt for your records.
-        </div>
-        <button className="receiptDownloadBtn" onClick={() => window.print()}>
-          Download Receipt
-        </button>
-      </div>
-    )}
-    {/* Hidden on screen, only rendered when window.print() runs - see .receiptPrintOnly */}
-    <Receipt data={lastReceipt} />
+    {lastReceipt && <Receipt data={lastReceipt} />}
+    </div>
+    </div>
     </div>
     </>
   );

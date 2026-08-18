@@ -1,0 +1,117 @@
+.nx-route-card {
+  max-width: 520px;
+  width: min(520px, calc(100vw - 40px));
+  box-sizing: border-box;
+  margin: 0 auto;
+  padding: 24px 20px !important;
+  overflow: hidden;
+}
+
+/* Stacked "You sell" / "You pay" rows with the swap-direction button
+   overlapping the seam between them. */
+.nx-route-rows {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.nx-route-row-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--nx-text-muted);
+  flex-shrink: 0;
+  width: 58px;
+}
+
+.nx-route-swap-btn {
+  position: relative;
+  align-self: center;
+  margin: -10px 0;
+  z-index: 2;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--nx-glass-border-strong);
+  background: var(--nx-bg-elevated, #171629);
+  color: var(--nx-text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.nx-route-swap-btn:hover {
+  color: var(--nx-cyan-soft, #22d3ee);
+  border-color: var(--nx-cyan-soft, #22d3ee);
+  transform: rotate(180deg);
+}
+
+.nx-route-card .nx-al-token-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.nx-route-card .nx-al-amount-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--nx-text-primary);
+  font-size: 20px;
+  font-weight: 700;
+  font-family: var(--font-display);
+  text-align: right;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  word-break: break-all;
+  overflow-wrap: anywhere;
+}
+
+.nx-route-card .nx-al-summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--nx-text-secondary);
+  padding: 8px 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.nx-route-card .nx-al-summary-row span {
+  flex-shrink: 0;
+  color: var(--nx-text-secondary);
+}
+
+.nx-route-card .nx-al-summary-row strong {
+  color: var(--nx-text-primary);
+  text-align: right;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  max-width: 70%;
+  line-height: 1.4;
+}
+
+.nx-route-card .nx-btn-full {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 14px;
+}

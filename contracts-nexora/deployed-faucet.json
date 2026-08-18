@@ -1,0 +1,31 @@
+{
+  "address": "0xCff899255A0A1aab76668A2623A2646cB7B9A171",
+  "claimAmount": 100,
+  "cooldownHours": 24,
+  "tokens": [
+    {
+      "ticker": "NOVA",
+      "name": "Nova Token",
+      "address": "0xEaa1c688722Ab93725ab3Cef546A3daf1a6434F6",
+      "decimals": 18
+    },
+    {
+      "ticker": "FSN",
+      "name": "Fusion Token",
+      "address": "0xE4d522ad0A85D630e03E82343E01A05a29C3b16c",
+      "decimals": 18
+    },
+    {
+      "ticker": "VRTX",
+      "name": "Vertex Token",
+      "address": "0x0CdE65EFC7Ee3Ae03E0DA71Be260160165794199",
+      "decimals": 18
+    },
+    {
+      "ticker": "ORBT",
+      "name": "Orbit Token",
+      "address": "0x543EfD557504a5bb6b70A6A0F33d4e571FD0E8d4",
+      "decimals": 18
+    }
+  ]
+}

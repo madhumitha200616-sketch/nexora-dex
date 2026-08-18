@@ -1,0 +1,26 @@
+{
+  "address": "0x22e8Ef8B121A265209ff51a89784E7227EAFa3b0",
+  "reservePerToken": 3000000,
+  "tokens": [
+    {
+      "ticker": "NOVA",
+      "address": "0xEaa1c688722Ab93725ab3Cef546A3daf1a6434F6",
+      "priceUsd": 10000
+    },
+    {
+      "ticker": "FSN",
+      "address": "0xE4d522ad0A85D630e03E82343E01A05a29C3b16c",
+      "priceUsd": 7500
+    },
+    {
+      "ticker": "VRTX",
+      "address": "0x0CdE65EFC7Ee3Ae03E0DA71Be260160165794199",
+      "priceUsd": 5000
+    },
+    {
+      "ticker": "ORBT",
+      "address": "0x543EfD557504a5bb6b70A6A0F33d4e571FD0E8d4",
+      "priceUsd": 2500
+    }
+  ]
+}

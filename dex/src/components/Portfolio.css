@@ -1,0 +1,274 @@
+.nx-portfolio-hero-card {
+  position: relative;
+  max-width: 520px;
+  margin: 0 0 32px;
+  padding: 26px 28px;
+  border-radius: 24px;
+  background: linear-gradient(160deg, rgba(168, 85, 247, 0.28), rgba(34, 211, 238, 0.1) 65%, rgba(255, 255, 255, 0.02));
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 30px 70px rgba(109, 94, 252, 0.28);
+}
+
+.nx-portfolio-hero-top {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: rgba(232, 235, 247, 0.6);
+  margin-bottom: 22px;
+}
+
+.nx-portfolio-hero-addr {
+  font-family: var(--font-mono, monospace);
+  color: rgba(232, 235, 247, 0.8);
+}
+
+.nx-portfolio-hero-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(232, 235, 247, 0.45);
+  margin-bottom: 6px;
+}
+
+.nx-portfolio-hero-value {
+  font-family: var(--font-display);
+  font-size: 34px;
+  font-weight: 800;
+  color: #e8ebf7;
+  margin-bottom: 18px;
+  font-variant-numeric: tabular-nums;
+}
+
+.nx-portfolio-hero-chips {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.nx-portfolio-layout {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.nx-portfolio-holdings {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.nx-holding-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+}
+
+.nx-holding-info { flex: 1; min-width: 0; }
+
+.nx-holding-symbol {
+  font-size: 15.5px;
+  font-weight: 700;
+}
+
+.nx-holding-name {
+  font-size: 12.5px;
+  color: var(--nx-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nx-holding-balance {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: 15px;
+  word-break: break-all;
+}
+
+.nx-holding-usd {
+  text-align: right;
+  font-size: 12.5px;
+  color: var(--nx-text-muted);
+}
+
+.nx-portfolio-chart-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.nx-portfolio-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  margin-top: 12px;
+}
+
+.nx-portfolio-legend-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--nx-text-secondary);
+}
+
+.nx-portfolio-legend-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* LP Positions Section Styles */
+.nx-lp-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.nx-lp-positions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 18px;
+}
+
+.nx-lp-card {
+  position: relative;
+  background: rgba(13, 12, 28, 0.7);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(168, 85, 247, 0.25);
+  border-radius: 20px;
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
+}
+
+.nx-lp-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(168, 85, 247, 0.45);
+  box-shadow: 0 14px 40px rgba(168, 85, 247, 0.2);
+}
+
+.nx-lp-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.nx-lp-pair-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nx-lp-pair-icons {
+  display: flex;
+  align-items: center;
+}
+
+.nx-lp-pair-icons .nx-token-icon:last-child {
+  margin-left: -10px;
+}
+
+.nx-lp-pair-title {
+  font-family: var(--font-display);
+  font-size: 16.5px;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.nx-lp-pair-sub {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.nx-lp-badge-fee {
+  background: rgba(168, 85, 247, 0.16);
+  border: 1px solid rgba(168, 85, 247, 0.35);
+  color: #c084fc;
+  padding: 4px 10px;
+  border-radius: var(--nx-radius-pill);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.nx-lp-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--nx-radius-pill);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.nx-lp-status-pill.nx-status-active {
+  background: rgba(52, 211, 153, 0.14);
+  border: 1px solid rgba(52, 211, 153, 0.35);
+  color: #34d399;
+}
+
+.nx-lp-status-pill.nx-status-inactive {
+  background: rgba(148, 163, 184, 0.14);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  color: #94a3b8;
+}
+
+.nx-lp-details-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nx-lp-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.nx-lp-detail-value {
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.95);
+  font-family: var(--font-mono, monospace);
+  word-break: break-all;
+}
+
+.nx-lp-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.nx-lp-actions button {
+  flex: 1;
+}
+
+@media (max-width: 900px) {
+  .nx-portfolio-layout {
+    grid-template-columns: 1fr;
+  }
+  .nx-lp-positions-grid {
+    grid-template-columns: 1fr;
+  }
+}

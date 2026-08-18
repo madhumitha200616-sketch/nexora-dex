@@ -1,0 +1,276 @@
+/* Scoped to .nx-nav-* only — does not touch any selector used by the
+   existing page components, so this can replace Header.js's markup
+   without affecting Swap/Wallet/Tokens/etc. */
+
+.nx-nav {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  height: var(--nx-navbar-h);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  background: rgba(5, 5, 11, 0.72);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.nx-nav-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nx-nav-logo {
+  display: flex;
+  align-items: center;
+  margin-right: 22px;
+  text-decoration: none;
+}
+
+.nx-nav-logo img {
+  height: 38px;
+  width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 0 12px rgba(168, 85, 247, 0.45));
+  transition: transform 0.25s ease, filter 0.25s ease;
+}
+
+.nx-nav-logo:hover img {
+  transform: scale(1.04);
+  filter: drop-shadow(0 0 18px rgba(34, 211, 238, 0.7));
+}
+
+.nx-nav-group {
+  position: relative;
+}
+
+.nx-nav-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  border-radius: var(--nx-radius-pill);
+  font-size: 18.5px;
+  font-weight: 600;
+  color: var(--nx-text-secondary);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background var(--nx-dur-fast) ease, color var(--nx-dur-fast) ease, border-color var(--nx-dur-fast) ease;
+  white-space: nowrap;
+  border: 1px solid transparent;
+  background: transparent;
+  font-family: var(--font-body);
+}
+
+.nx-nav-item:hover {
+  color: var(--nx-text-primary);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Two-tone purple->cyan glass highlight for the active section, instead of
+   the old flat purple pill - a subtle brand-specific cue rather than the
+   generic single-color "selected tab" look most DEX navs use. */
+.nx-nav-item.nx-active {
+  color: #ffffff;
+  background: linear-gradient(120deg, rgba(168, 85, 247, 0.4), rgba(109, 94, 252, 0.28) 55%, rgba(34, 211, 238, 0.22));
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  box-shadow: 0 0 18px -3px rgba(168, 85, 247, 0.4), 0 0 14px -4px rgba(34, 211, 238, 0.3);
+}
+
+.nx-nav-caret {
+  font-size: 9px;
+  opacity: 0.6;
+  transition: transform var(--nx-dur-fast) ease;
+}
+
+.nx-nav-group.nx-open .nx-nav-caret {
+  transform: rotate(180deg);
+}
+
+.nx-nav-dropdown {
+  position: absolute;
+  top: calc(100% + 12px);
+  left: 0;
+  min-width: 216px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--nx-bg-panel);
+  border: 1px solid var(--nx-glass-border-strong);
+  border-radius: var(--nx-radius-md);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.5);
+  animation: nx-fade-up 0.18s var(--nx-ease);
+}
+
+.nx-nav-dropdown .nx-nav-item {
+  width: 100%;
+  justify-content: flex-start;
+  padding: 10px 12px;
+  font-size: 17px;
+}
+
+.nx-nav-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nx-nav-icon-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--nx-glass-border);
+  color: var(--nx-text-secondary);
+  cursor: pointer;
+  font-size: 15px;
+  transition: background var(--nx-dur-fast) ease, color var(--nx-dur-fast) ease, transform var(--nx-dur-fast) ease;
+  position: relative;
+}
+
+.nx-nav-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.nx-nav-search-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 10px 0 14px;
+  border-radius: var(--nx-radius-pill);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--nx-glass-border);
+  color: var(--nx-text-secondary);
+  cursor: pointer;
+  font-size: 15.5px;
+  font-family: var(--font-body);
+  transition: background var(--nx-dur-fast) ease, color var(--nx-dur-fast) ease, transform var(--nx-dur-fast) ease;
+}
+
+.nx-nav-search-pill:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.nx-nav-search-kbd {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--nx-text-faint);
+  border: 1px solid var(--nx-glass-border);
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+@media (max-width: 720px) {
+  .nx-nav-search-label {
+    display: none;
+  }
+  .nx-nav-search-pill {
+    padding: 0 10px;
+  }
+}
+
+.nx-nav-icon-btn .nx-nav-dot {
+  position: absolute;
+  top: 6px;
+  right: 7px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--nx-magenta);
+  box-shadow: 0 0 6px var(--nx-magenta);
+}
+
+.nx-nav-network {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 14px;
+  border-radius: var(--nx-radius-pill);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--nx-glass-border);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--nx-text-secondary);
+}
+
+.nx-nav-network img {
+  width: 16px;
+  height: 16px;
+}
+
+.nx-nav-connect {
+  font-size: 14.5px;
+}
+
+.nx-nav-burger {
+  display: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid var(--nx-glass-border);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--nx-text-primary);
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.nx-nav-mobile-panel {
+  position: fixed;
+  inset: var(--nx-navbar-h) 0 0 0;
+  z-index: 39;
+  background: rgba(5, 5, 11, 0.97);
+  backdrop-filter: blur(20px);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+  animation: nx-fade-up 0.2s var(--nx-ease);
+}
+
+.nx-nav-mobile-panel .nx-nav-section-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--nx-text-faint);
+  padding: 14px 12px 4px;
+}
+
+.nx-nav-mobile-panel .nx-nav-item {
+  font-size: 15px;
+  padding: 12px 12px;
+}
+
+@media (max-width: 980px) {
+  .nx-nav-left > .nx-nav-group,
+  .nx-nav-left > a.nx-nav-item {
+    display: none;
+  }
+  .nx-nav-burger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 560px) {
+  .nx-nav {
+    padding: 0 14px;
+  }
+  .nx-nav-network span {
+    display: none;
+  }
+}

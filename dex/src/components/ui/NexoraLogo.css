@@ -1,0 +1,61 @@
+/* Nexora Premium Geometric Monogram Logo Styles */
+
+.nx-brand-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  user-select: none;
+  text-decoration: none;
+  transition: transform var(--nx-dur-fast, 0.2s) ease, opacity var(--nx-dur-fast, 0.2s) ease;
+}
+
+.nx-brand-svg {
+  flex-shrink: 0;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.25s ease;
+  filter: drop-shadow(0 0 10px rgba(168, 85, 247, 0.35));
+}
+
+.nx-brand-logo:hover .nx-brand-svg {
+  transform: scale(1.05);
+  filter: drop-shadow(0 0 16px rgba(34, 211, 238, 0.55));
+}
+
+.nx-brand-wordmark {
+  font-family: var(--font-display, "Sora", sans-serif);
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  text-transform: uppercase;
+}
+
+.nx-brand-word-main {
+  color: #ffffff;
+  transition: color 0.2s ease;
+}
+
+.nx-brand-word-accent {
+  background: linear-gradient(135deg, #38bdf8 0%, #a855f7 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Navbar specific variant */
+.nx-brand-logo-navbar .nx-brand-wordmark {
+  font-size: 19px;
+}
+
+/* Footer specific variant */
+.nx-brand-logo-footer {
+  opacity: 0.9;
+}
+
+.nx-brand-logo-footer:hover {
+  opacity: 1;
+}
+
+.nx-brand-logo-footer .nx-brand-svg {
+  filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.25));
+}

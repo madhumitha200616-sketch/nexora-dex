@@ -1,7 +1,15 @@
 import React, { useState, useEffect } from 'react'
 import { Input, message } from "antd";
 import { ethers } from "ethers";
-import { handleTiltMove, handleTiltLeave } from "../tiltEffect";
+import PageShell from "./ui/PageShell";
+import GlassCard from "./ui/GlassCard";
+import PrimaryButton from "./ui/PrimaryButton";
+import SecondaryButton from "./ui/SecondaryButton";
+import TokenIcon from "./ui/TokenIcon";
+import ThreeDBackground from "./ui/ThreeDBackground";
+import tokenList from "../tokenList.json";
+import { useNotifications } from "../context/NotificationsContext";
+import "./AddLiquidity.css";
 
 // Canonical Sepolia WETH9 - same contract already used as WETH's
 // sepoliaAddress in tokenList.json. WETH is just ETH wrapped into an ERC-20
@@ -24,6 +32,7 @@ function WrapEth({ isConnected, address }) {
   const [ethBalance, setEthBalance] = useState(null);
   const [wethBalance, setWethBalance] = useState(null);
   const [isBusy, setIsBusy] = useState(false);
+  const { push: pushNotification } = useNotifications();
 
   useEffect(() => {
     if (!isConnected || !address) {
@@ -81,11 +90,13 @@ function WrapEth({ isConnected, address }) {
         const tx = await weth.deposit({ value });
         await tx.wait();
         message.success("Wrapped! WETH is in your wallet - use Swap above to trade it for USDC.");
+        pushNotification({ kind: "swap", message: `Wrapped ${amount} ETH → WETH`, txHash: tx.hash });
       } else {
         message.info("Confirm in MetaMask to unwrap WETH back into ETH...");
         const tx = await weth.withdraw(value);
         await tx.wait();
         message.success("Unwrapped! ETH is back in your wallet.");
+        pushNotification({ kind: "swap", message: `Unwrapped ${amount} WETH → ETH`, txHash: tx.hash });
       }
       setAmount('');
       fetchBalances();
@@ -110,47 +121,74 @@ function WrapEth({ isConnected, address }) {
     ? (ethBalance !== null ? `${Number(ethBalance).toFixed(6)} ETH` : '...')
     : (wethBalance !== null ? `${Number(wethBalance).toFixed(6)} WETH` : '...');
 
+  const fromTicker = mode === 'wrap' ? 'ETH' : 'WETH';
+  const toTicker = mode === 'wrap' ? 'WETH' : 'ETH';
+  const toMeta = tokenList.find((t) => t.ticker === toTicker);
+  const receiveAmount = amount && Number(amount) > 0 ? Number(amount).toFixed(6) : '0.0';
+
   return (
-    <div className="wrapBox" onMouseMove={handleTiltMove} onMouseLeave={handleTiltLeave}>
-      <div className="wrapHeader">
-        <h4>Wrap ETH</h4>
-        <div className="wrapTabs">
-          <span
-            className={mode === 'wrap' ? "wrapTab wrapTabActive" : "wrapTab"}
-            onClick={() => { setMode('wrap'); setAmount(''); }}
-          >
-            ETH → WETH
-          </span>
-          <span
-            className={mode === 'unwrap' ? "wrapTab wrapTabActive" : "wrapTab"}
-            onClick={() => { setMode('unwrap'); setAmount(''); }}
-          >
-            WETH → ETH
-          </span>
+    <PageShell
+      eyebrow="Fast Action"
+      title="Wrap ETH"
+      subtitle="Convert native Sepolia ETH into WETH 1:1 - no price impact, no slippage, no pool involved - so it can be swapped like any other token."
+      background={<ThreeDBackground intensity={3} />}
+    >
+      <GlassCard glow pad="lg" className="nx-al-card" tilt>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 18 }}>
+          {mode === 'wrap' ? (
+            <PrimaryButton style={{ flex: 1 }} onClick={() => { setMode('wrap'); setAmount(''); }}>Wrap</PrimaryButton>
+          ) : (
+            <SecondaryButton style={{ flex: 1 }} onClick={() => { setMode('wrap'); setAmount(''); }}>Wrap</SecondaryButton>
+          )}
+          {mode === 'unwrap' ? (
+            <PrimaryButton style={{ flex: 1 }} onClick={() => { setMode('unwrap'); setAmount(''); }}>Unwrap</PrimaryButton>
+          ) : (
+            <SecondaryButton style={{ flex: 1 }} onClick={() => { setMode('unwrap'); setAmount(''); }}>Unwrap</SecondaryButton>
+          )}
         </div>
-      </div>
 
-      <div className="balanceRow">
-        Available: {availableLabel}
-        <span className="maxBtn" onClick={setMaxAmount}>MAX</span>
-      </div>
+        <div className="nx-al-summary-row">
+          <span>Available: {availableLabel}</span>
+          <SecondaryButton size="sm" style={{ padding: '3px 12px', fontSize: 11 }} onClick={setMaxAmount}>MAX</SecondaryButton>
+        </div>
 
-      <Input
-        placeholder="0"
-        value={amount}
-        onChange={(e) => setAmount(e.target.value)}
-      />
+        <div className="nx-al-token-row">
+          <TokenIcon symbol={fromTicker} src={tokenList.find((t) => t.ticker === fromTicker)?.img} size={32} />
+          <span className="nx-al-token-select" style={{ cursor: 'default' }}>{fromTicker}</span>
+          <Input
+            className="nx-al-amount-input"
+            bordered={false}
+            placeholder="0.0"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+          />
+        </div>
 
-      <button className="wrapButton" disabled={isBusy || !amount} onClick={handleAction}>
-        {isBusy ? "Processing..." : (mode === 'wrap' ? "Wrap ETH" : "Unwrap WETH")}
-      </button>
+        <div className="nx-al-summary-row">
+          <span>You will receive</span>
+          <strong>{receiveAmount} {toTicker}</strong>
+        </div>
+        <div className="nx-al-summary-row">
+          <span>Rate</span>
+          <strong>1 {fromTicker} = 1 {toTicker}</strong>
+        </div>
 
-      <div className="wrapNote">
-        1 ETH = 1 WETH, always - no price impact, no slippage, no pool involved.
-        This just converts native ETH into an ERC-20 token so it can be swapped.
-        Wrap ETH here first, then use Swap above to trade WETH → USDC.
-      </div>
-    </div>
+        <PrimaryButton
+          full
+          disabled={isBusy || !amount}
+          onClick={handleAction}
+          style={{ marginTop: 14 }}
+        >
+          {isBusy ? "Processing..." : (mode === 'wrap' ? "Wrap ETH" : "Unwrap WETH")}
+        </PrimaryButton>
+
+        <div className="nx-al-banner" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <TokenIcon symbol={toTicker} src={toMeta?.img} size={20} />
+          1 ETH = 1 WETH, always. This just converts native ETH into an ERC-20 token so it can be
+          approved and swapped. Wrap ETH here first, then use Swap to trade WETH → USDC.
+        </div>
+      </GlassCard>
+    </PageShell>
   );
 }
 

@@ -1,0 +1,129 @@
+{
+  "generatedAtBlock": 11436310,
+  "scanFromBlock": 11431310,
+  "factoryAddress": "0x0227628f3F023bb0B980b67D528571c95c6DaC1c",
+  "usdcAddress": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+  "faucetAddress": "0xCff899255A0A1aab76668A2623A2646cB7B9A171",
+  "tokens": [
+    {
+      "ticker": "NOVA",
+      "name": "Nova Token",
+      "address": "0xEaa1c688722Ab93725ab3Cef546A3daf1a6434F6",
+      "decimals": 18,
+      "priceUsd": 10000
+    },
+    {
+      "ticker": "FSN",
+      "name": "Fusion Token",
+      "address": "0xE4d522ad0A85D630e03E82343E01A05a29C3b16c",
+      "decimals": 18,
+      "priceUsd": 7500
+    },
+    {
+      "ticker": "VRTX",
+      "name": "Vertex Token",
+      "address": "0x0CdE65EFC7Ee3Ae03E0DA71Be260160165794199",
+      "decimals": 18,
+      "priceUsd": 5000
+    },
+    {
+      "ticker": "ORBT",
+      "name": "Orbit Token",
+      "address": "0x543EfD557504a5bb6b70A6A0F33d4e571FD0E8d4",
+      "decimals": 18,
+      "priceUsd": 2500
+    }
+  ],
+  "pools": [
+    {
+      "pair": "NOVA/FSN",
+      "tokenA": "NOVA",
+      "tokenB": "FSN",
+      "address": "0x09bDfD74fF0e7505CE3A5753B4b206Bf6fcb7cee",
+      "fee": 500,
+      "tick": -2877,
+      "liquidity": "84011104084494695696810393"
+    },
+    {
+      "pair": "NOVA/VRTX",
+      "tokenA": "NOVA",
+      "tokenB": "VRTX",
+      "address": "0x462173C8331C7f8735e88efcEAe12dF196755233",
+      "fee": 500,
+      "tick": -6932,
+      "liquidity": "100763339666252864452288769"
+    },
+    {
+      "pair": "NOVA/ORBT",
+      "tokenA": "NOVA",
+      "tokenB": "ORBT",
+      "address": "0x772bF4E3Ea76ef3501651051a291E6680a0C54e3",
+      "fee": 500,
+      "tick": -13864,
+      "liquidity": "145894245519805070624971172"
+    },
+    {
+      "pair": "FSN/VRTX",
+      "tokenA": "FSN",
+      "tokenB": "VRTX",
+      "address": "0xF77e17e117dA4C70d9992Ff2aca1C52b7518f57d",
+      "fee": 500,
+      "tick": -4055,
+      "liquidity": "89820059308724454273114212"
+    },
+    {
+      "pair": "FSN/ORBT",
+      "tokenA": "FSN",
+      "tokenB": "ORBT",
+      "address": "0x55A994dAd28d18fF60f3Cad6915aBb35fFAc5035",
+      "fee": 500,
+      "tick": -10987,
+      "liquidity": "126177622542517901779016873"
+    },
+    {
+      "pair": "VRTX/ORBT",
+      "tokenA": "VRTX",
+      "tokenB": "ORBT",
+      "address": "0xA5BA089421Bc511ba0e046dab3a9A5388c5280c6",
+      "fee": 500,
+      "tick": 6931,
+      "liquidity": "100763339666252864452288769"
+    },
+    {
+      "pair": "NOVA/USDC",
+      "tokenA": "NOVA",
+      "tokenB": "USDC",
+      "address": "0xE1189AEB3F0DE6D8433E92982c7E8B7D6285a94E",
+      "fee": 3000,
+      "tick": 184216,
+      "liquidity": "100000000000"
+    },
+    {
+      "pair": "FSN/USDC",
+      "tokenA": "FSN",
+      "tokenB": "USDC",
+      "address": "0xD0DF37B1db656de1d8904019069dC9453bEc36A5",
+      "fee": 3000,
+      "tick": 187092,
+      "liquidity": "115470053837"
+    },
+    {
+      "pair": "VRTX/USDC",
+      "tokenA": "VRTX",
+      "tokenB": "USDC",
+      "address": "0x8630D374dcEF6F7cD491520f776132BA1dd29629",
+      "fee": 3000,
+      "tick": -191148,
+      "liquidity": "141421356237"
+    },
+    {
+      "pair": "ORBT/USDC",
+      "tokenA": "ORBT",
+      "tokenB": "USDC",
+      "address": "0x695A779B0d9b2507FF222886D5aEFA9D67b43e20",
+      "fee": 3000,
+      "tick": 198079,
+      "liquidity": "200000000000"
+    }
+  ]
+}

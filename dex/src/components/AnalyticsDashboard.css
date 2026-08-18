@@ -1,0 +1,499 @@
+/* Scoped entirely to the Analytics Dashboard page - every rule is under
+   .an-page or targets .an-* classes, so nothing here touches Swap/Wallet/
+   Pool-that-was/Faucet pages or the shared header. */
+
+.an-page {
+  position: relative;
+  min-height: calc(100vh - 64px);
+  padding: 48px 20px 96px;
+  box-sizing: border-box;
+  overflow: hidden;
+  color: #e8ebf7;
+  font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+.an-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background: radial-gradient(ellipse at 70% 0%, #10122a 0%, #060714 55%, #030309 100%);
+}
+
+.an-particles {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.an-particle {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(0.5px);
+  animation: an-float linear infinite;
+}
+
+@keyframes an-float {
+  0% { transform: translateY(10vh) translateX(0); opacity: 0; }
+  10% { opacity: 0.7; }
+  90% { opacity: 0.5; }
+  100% { transform: translateY(-110vh) translateX(20px); opacity: 0; }
+}
+
+.an-content {
+  position: relative;
+  z-index: 1;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+/* ---------- Header ---------- */
+
+.an-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.an-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(232, 235, 247, 0.6);
+  margin-bottom: 20px;
+}
+
+.an-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.an-dot-on { background: #34d399; box-shadow: 0 0 8px #34d399; animation: an-pulse 2s ease-in-out infinite; }
+.an-dot-off { background: #ef4444; box-shadow: 0 0 8px #ef4444; }
+.an-dot-wait { background: #f59e0b; box-shadow: 0 0 8px #f59e0b; animation: an-pulse 1.4s ease-in-out infinite; }
+
+@keyframes an-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+.an-title {
+  font-size: clamp(2.3rem, 5.6vw, 3.7rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin: 0 0 14px;
+  background: linear-gradient(120deg, #7dd3fc 0%, #e8ebf7 35%, #c4b5fd 65%, #6ee7b7 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.an-subtitle {
+  font-size: clamp(16px, 1.5vw, 17px);
+  color: rgba(232, 235, 247, 0.5);
+  max-width: 620px;
+  margin: 0 auto;
+  line-height: 1.65;
+}
+
+.an-refresh-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+  font-size: 11px;
+  color: rgba(232, 235, 247, 0.35);
+}
+
+.an-refresh-btn {
+  font-family: inherit;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(232, 235, 247, 0.7);
+  border-radius: 999px;
+  padding: 5px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  transition: 0.2s ease;
+}
+
+.an-refresh-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.09);
+  color: #fff;
+}
+
+.an-refresh-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---------- Glass surface ---------- */
+
+.an-glass {
+  position: relative;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.012));
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.3);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.an-glass:hover {
+  transform: translateY(-3px);
+  border-color: rgba(125, 211, 252, 0.3);
+  box-shadow: 0 14px 34px rgba(34, 211, 238, 0.1);
+}
+
+/* ---------- Section headings ---------- */
+
+.an-section {
+  margin-top: 52px;
+}
+
+/* Stronger separation between sections than a bare margin - reads as one
+   deliberate dashboard layout rather than stacked, disconnected blocks. */
+.an-section + .an-section {
+  padding-top: 44px;
+  border-top: 1px solid var(--nx-glass-border, rgba(255, 255, 255, 0.08));
+}
+
+.an-section-heading {
+  font-size: clamp(1.3rem, 2.3vw, 1.6rem);
+  font-weight: 700;
+  color: #e8ebf7;
+  margin: 0 0 4px;
+}
+
+.an-section-sub {
+  font-size: 15px;
+  color: rgba(232, 235, 247, 0.4);
+  margin: 0 0 24px;
+}
+
+/* ---------- Stat cards grid ---------- */
+
+.an-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  grid-auto-rows: 1fr;
+  gap: 14px;
+}
+
+.an-stat-card {
+  padding: 20px 20px 18px;
+  min-height: 122px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  /* Grid items default to min-width:auto, which refuses to shrink below
+     the unwrapped width of their content - that's what let long values
+     like "$250,000,000,000" push past the card edge instead of wrapping. */
+  min-width: 0;
+}
+
+.an-stat-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.an-stat-label {
+  font-size: 13.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(232, 235, 247, 0.45);
+}
+
+.an-stat-value {
+  font-size: clamp(18px, 2.2vw, 28px);
+  font-weight: 800;
+  color: #e8ebf7;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.an-stat-sub {
+  font-size: 11px;
+  color: rgba(232, 235, 247, 0.35);
+}
+
+.an-stat-unavailable {
+  color: rgba(232, 235, 247, 0.3);
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+/* ---------- Circular progress ring group ---------- */
+
+/* Ring grid + the "At a Glance" watchlist-style panel sit side by side,
+   same two-column treatment already used on Portfolio's holdings/allocation
+   layout, so the health section reads as one composed dashboard row instead
+   of a lone grid of rings. */
+.an-health-layout {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 20px;
+  align-items: stretch;
+}
+
+.an-ring-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-auto-rows: 1fr;
+  gap: 18px;
+}
+
+.an-ring-card {
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  text-align: center;
+}
+
+/* ---------- At a glance panel ---------- */
+
+.an-glance-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.an-glance-header {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--nx-text-muted, rgba(232, 235, 247, 0.45));
+  margin-bottom: 14px;
+}
+
+.an-glance-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.an-glance-row:last-child {
+  border-bottom: none;
+}
+
+.an-glance-label {
+  font-size: 14.5px;
+  color: rgba(232, 235, 247, 0.6);
+  flex-shrink: 0;
+}
+
+.an-glance-value {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #e8ebf7;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.an-ring-svg {
+  transform: rotate(-90deg);
+}
+
+.an-ring-track {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.07);
+}
+
+.an-ring-fill {
+  fill: none;
+  stroke-linecap: round;
+}
+
+.an-ring-value {
+  font-size: 1.05rem;
+  font-weight: 800;
+  fill: #e8ebf7;
+}
+
+.an-ring-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(232, 235, 247, 0.6);
+}
+
+/* ---------- Per-token cards ---------- */
+
+.an-token-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-auto-rows: 1fr;
+  gap: 16px;
+}
+
+.an-token-card {
+  padding: 22px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.an-token-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.an-token-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.an-token-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: #e8ebf7;
+}
+
+.an-token-addr {
+  font-size: 10px;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  color: rgba(232, 235, 247, 0.4);
+}
+
+.an-token-rows {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.an-token-stat {
+  padding: 9px 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.an-token-stat-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(232, 235, 247, 0.4);
+  margin-bottom: 3px;
+}
+
+.an-token-stat-value {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #e8ebf7;
+  font-variant-numeric: tabular-nums;
+}
+
+.an-token-stat-wide {
+  grid-column: 1 / -1;
+}
+
+.an-token-stat-mono {
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  word-break: break-all;
+}
+
+/* ---------- Footnote ---------- */
+
+.an-footnote {
+  margin-top: 48px;
+  text-align: center;
+  font-size: 11px;
+  color: rgba(232, 235, 247, 0.3);
+  line-height: 1.6;
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ---------- Loading state ---------- */
+
+.an-loading {
+  text-align: center;
+  padding: 60px 20px;
+  color: rgba(232, 235, 247, 0.5);
+  font-size: 14px;
+}
+
+.an-loading-bar {
+  width: 220px;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 18px auto 0;
+  overflow: hidden;
+}
+
+.an-loading-bar-fill {
+  height: 100%;
+  width: 40%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #22d3ee, #a855f7, #34d399);
+  animation: an-loading-slide 1.2s ease-in-out infinite;
+}
+
+@keyframes an-loading-slide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(350%); }
+}
+
+@media (max-width: 900px) {
+  .an-health-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .an-page {
+    padding: 36px 14px 72px;
+  }
+  .an-token-rows {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .an-particle,
+  .an-dot-on,
+  .an-dot-wait,
+  .an-loading-bar-fill {
+    animation: none;
+  }
+}
+

@@ -1,5 +1,5 @@
 import React from "react";
-import Logo from "../nexora-logo-full.png";
+import NexoraLogo from "./ui/NexoraLogo";
 import Sepolia from "../sepolia-badge.png";
 import  { Link } from  "react-router-dom";
 
@@ -12,7 +12,9 @@ function Header({ connect, isConnected, address }) {
   return (
    <header>
     <div className="leftH">
-      <img src={Logo}alt="logo" className="logo" />
+      <Link to="/" style={{ textDecoration: "none" }}>
+        <NexoraLogo variant="navbar" size="md" />
+      </Link>
       <Link to="/" className="link">
        <div className="headerItem">Swap</div>
       </Link>
@@ -23,16 +25,19 @@ function Header({ connect, isConnected, address }) {
        <div className="headerItem">Wrap</div>
       </Link>
       <Link to="/chart" className="link">
-       <div className="headerItem">Chart</div>
+       <div className="headerItem">Analytics</div>
+      </Link>
+      <Link to="/markets" className="link">
+       <div className="headerItem">Markets</div>
       </Link>
       <Link to="/faucets" className="link">
        <div className="headerItem">Faucets</div>
       </Link>
+      <Link to="/nexora-faucet" className="link">
+       <div className="headerItem">Nexora Faucet</div>
+      </Link>
       <Link to="/wallet" className="link">
        <div className="headerItem">Wallet</div>
-      </Link>
-      <Link to="/pool" className="link">
-       <div className="headerItem">Pool</div>
       </Link>
     </div>
      <div className="rightH">

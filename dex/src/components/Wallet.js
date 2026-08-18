@@ -1,11 +1,16 @@
 import React, { useState, useEffect } from 'react'
 import { ethers } from "ethers";
 import { message } from "antd";
+import { Link } from "react-router-dom";
 import { CopyOutlined, CheckOutlined, LogoutOutlined } from "@ant-design/icons";
 import tokenList from "../tokenList.json";
 import Sepolia from "../sepolia-badge.png";
-import EthIcon from "../eth.svg";
-import { handleTiltMove, handleTiltLeave } from "../tiltEffect";
+import PageShell from "./ui/PageShell";
+import GlassCard from "./ui/GlassCard";
+import TokenIcon from "./ui/TokenIcon";
+import EmptyState from "./ui/EmptyState";
+import ThreeDBackground from "./ui/ThreeDBackground";
+import "./Wallet.css";
 
 // Same "only tokens with a real Sepolia contract" filter used by Tokens.js -
 // these are the only balances worth showing since they're the only tokens
@@ -15,27 +20,6 @@ const SEPOLIA_TOKENS = tokenList.filter((t) => t.sepoliaAddress);
 const ERC20_ABI = [
   "function balanceOf(address owner) external view returns (uint256)"
 ];
-
-// Each stat card gets its own accent color instead of every card in the
-// grid looking identical - ETH stays cyan (matches the rest of the app's
-// "native asset" color), each token gets a distinct hue, Gas gets the same
-// amber already used for gas estimates on the Swap page, and anything not
-// listed here (a future token) falls back to the page's violet accent.
-// Applied via CSS custom properties so .walletStatCard in App.css can stay
-// a single shared rule instead of one class per token.
-const STAT_ACCENTS = {
-  ETH: { border: "rgba(0, 217, 255, 0.4)", glow: "rgba(0, 217, 255, 0.22)" },
-  WETH: { border: "rgba(109, 94, 252, 0.4)", glow: "rgba(109, 94, 252, 0.22)" },
-  USDC: { border: "rgba(0, 230, 160, 0.4)", glow: "rgba(0, 230, 160, 0.22)" },
-  LINK: { border: "rgba(59, 130, 246, 0.4)", glow: "rgba(59, 130, 246, 0.22)" },
-  GAS: { border: "rgba(255, 182, 72, 0.4)", glow: "rgba(255, 182, 72, 0.22)" },
-};
-const DEFAULT_ACCENT = { border: "rgba(168, 85, 247, 0.35)", glow: "rgba(168, 85, 247, 0.18)" };
-
-function accentStyle(key) {
-  const accent = STAT_ACCENTS[key] || DEFAULT_ACCENT;
-  return { "--statBorder": accent.border, "--statGlow": accent.glow };
-}
 
 function Wallet({ isConnected, address, disconnect }) {
   const [ethBalance, setEthBalance] = useState(null);
@@ -97,75 +81,101 @@ function Wallet({ isConnected, address, disconnect }) {
     message.info("Wallet disconnected");
   }
 
+  // Presentation-only derived list - same balances already in state above,
+  // just shaped into rows for the holdings list (no new fetch, no invented
+  // fields).
+  const holdings = [
+    { ticker: "ETH", name: "Ethereum", balance: ethBalance !== null ? Number(ethBalance) : null, img: null },
+    ...SEPOLIA_TOKENS.map((t) => ({
+      ticker: t.ticker,
+      name: t.name,
+      balance: tokenBalances[t.ticker] !== undefined ? Number(tokenBalances[t.ticker]) : null,
+      img: t.img,
+    })),
+  ];
+
   if (!isConnected || !address) {
     return (
-      <div className="tokensPage">
-        <div className="tokensEmpty">Connect your wallet (top right) to view your dashboard.</div>
-      </div>
+      <PageShell
+        eyebrow="Your Wallet"
+        title="Wallet"
+        subtitle="Connect your wallet to see your live Nexora balance and holdings."
+        background={<ThreeDBackground intensity={3} />}
+      >
+        <EmptyState
+          icon="👛"
+          title="Wallet not connected"
+          description="Connect MetaMask (top right) to view your dashboard."
+        />
+      </PageShell>
     );
   }
 
   return (
-    <div className="tokensPage walletPage">
-      <div className="tokensHeader">
-        <h4>Wallet</h4>
-        <span className="walletConnectedBadge">
-          <span className="walletDot"></span> Connected
-        </span>
-      </div>
-
-      <div className="walletAddressRow" onMouseMove={handleTiltMove} onMouseLeave={handleTiltLeave}>
-        <span className="walletAddressFull">{address}</span>
-        <span className="walletCopyBtn" onClick={copyAddress}>
-          {copied ? <CheckOutlined /> : <CopyOutlined />}
-        </span>
-      </div>
-
-      <div className="walletNetworkRow">
-        <img src={Sepolia} alt="sepolia" className="eth" />
-        Sepolia Testnet
-      </div>
-
-      <div className="walletStatsGrid">
-        <div className="walletStatCard" style={accentStyle("ETH")} onMouseMove={handleTiltMove} onMouseLeave={handleTiltLeave}>
-          <img src={EthIcon} alt="ETH" className="walletStatIcon" />
-          <div className="walletStatInfo">
-            <div className="walletStatLabel">ETH Balance</div>
-            <div className="walletStatValue">
-              {ethBalance !== null ? `${Number(ethBalance).toFixed(5)} ETH` : (loading ? "..." : "-")}
-            </div>
+    <PageShell
+      eyebrow="Your Wallet"
+      title="Wallet"
+      subtitle="Real balances read live from Sepolia."
+      background={<ThreeDBackground intensity={3} />}
+    >
+      <div className="nx-wallet-layout">
+        <div className="nx-wallet-card">
+          <div className="nx-wallet-card-glow" />
+          <div className="nx-wallet-card-top">
+            <span className="nx-wallet-card-label">Nexora Wallet</span>
+            <span className="nx-wallet-network">
+              <img src={Sepolia} alt="sepolia" />
+              Sepolia
+            </span>
           </div>
+
+          <div className="nx-wallet-address-row">
+            <span className="nx-wallet-address">{address.slice(0, 6)}...{address.slice(-4)}</span>
+            <button className="nx-wallet-copy-btn" onClick={copyAddress} aria-label="Copy address">
+              {copied ? <CheckOutlined /> : <CopyOutlined />}
+            </button>
+          </div>
+
+          <div className="nx-wallet-balance-label">Balance</div>
+          <div className="nx-wallet-balance-value">
+            {ethBalance !== null ? `${Number(ethBalance).toFixed(5)}` : (loading ? "…" : "0.00000")}
+            <span className="nx-wallet-balance-unit">ETH</span>
+          </div>
+
+          <div className="nx-wallet-card-status">
+            <span className="walletDot"></span> Connected
+          </div>
+
+          <button className="nx-wallet-disconnect-btn" onClick={handleDisconnect}>
+            <LogoutOutlined /> Disconnect
+          </button>
         </div>
 
-        {SEPOLIA_TOKENS.map((token) => (
-          <div className="walletStatCard" key={token.ticker} style={accentStyle(token.ticker)} onMouseMove={handleTiltMove} onMouseLeave={handleTiltLeave}>
-            <img src={token.img} alt={token.ticker} className="walletStatIcon" />
-            <div className="walletStatInfo">
-              <div className="walletStatLabel">{token.ticker} Balance</div>
-              <div className="walletStatValue">
-                {tokenBalances[token.ticker] !== undefined
-                  ? `${Number(tokenBalances[token.ticker]).toFixed(6)} ${token.ticker}`
-                  : (loading ? "..." : "-")}
+        <GlassCard pad="md" className="nx-wallet-holdings-card">
+          <div className="nx-wallet-holdings-header">
+            <h3 className="nx-section-heading" style={{ textAlign: "left", margin: 0 }}>Holdings</h3>
+            <Link to="/portfolio" className="nx-wallet-portfolio-link">View full Portfolio →</Link>
+          </div>
+          <div className="nx-wallet-holdings-list">
+            {loading && holdings.every((h) => h.balance === null) && (
+              <div className="nx-wallet-loading">Loading balances…</div>
+            )}
+            {holdings.map((h) => (
+              <div key={h.ticker} className="nx-wallet-holding-row">
+                <TokenIcon symbol={h.ticker} src={h.img} size={36} />
+                <div className="nx-wallet-holding-info">
+                  <div className="nx-wallet-holding-symbol">{h.ticker}</div>
+                  <div className="nx-wallet-holding-name">{h.name}</div>
+                </div>
+                <div className="nx-wallet-holding-balance">
+                  {h.balance !== null ? h.balance.toFixed(6) : (loading ? "…" : "-")}
+                </div>
               </div>
-            </div>
+            ))}
           </div>
-        ))}
-
-        <div className="walletStatCard" style={accentStyle("GAS")} onMouseMove={handleTiltMove} onMouseLeave={handleTiltLeave}>
-          <img src={EthIcon} alt="Gas" className="walletStatIcon" />
-          <div className="walletStatInfo">
-            <div className="walletStatLabel">Gas Available</div>
-            <div className="walletStatValue">
-              {ethBalance !== null ? `${Number(ethBalance).toFixed(5)} ETH` : (loading ? "..." : "-")}
-            </div>
-          </div>
-        </div>
+        </GlassCard>
       </div>
-
-      <button className="walletDisconnectBtn" onClick={handleDisconnect}>
-        <LogoutOutlined /> Disconnect Wallet
-      </button>
-    </div>
+    </PageShell>
   );
 }
 

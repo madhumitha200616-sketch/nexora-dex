@@ -1,0 +1,265 @@
+/* ==========================================================================
+   Wallet page - "NexChain wallet card" + holdings list.
+   Reuses tokens.css variables and the shared nx- glass/button language from
+   ui.css; nothing here duplicates or overrides those, it only adds the
+   wallet-card-specific layout.
+   ========================================================================== */
+
+.nx-wallet-layout {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+/* ---------- Physical wallet/credit-card styled hero ---------- */
+
+.nx-wallet-card {
+  position: relative;
+  overflow: hidden;
+  padding: 28px 26px;
+  border-radius: var(--nx-radius-xl);
+  background: linear-gradient(155deg, rgba(168, 85, 247, 0.32), rgba(34, 211, 238, 0.12) 55%, rgba(255, 255, 255, 0.03));
+  backdrop-filter: blur(var(--nx-glass-blur));
+  -webkit-backdrop-filter: blur(var(--nx-glass-blur));
+  border: 1px solid var(--nx-glass-border-strong);
+  box-shadow: 0 30px 70px rgba(109, 94, 252, 0.28);
+  aspect-ratio: 1.586 / 1;
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+}
+
+.nx-wallet-card-glow {
+  position: absolute;
+  inset: -40%;
+  background: var(--nx-gradient-conic);
+  opacity: 0.12;
+  filter: blur(60px);
+  pointer-events: none;
+  animation: nx-border-spin 12s linear infinite;
+}
+
+.nx-wallet-card-top {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+
+.nx-wallet-card-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--nx-text-secondary);
+}
+
+.nx-wallet-network {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--nx-text-secondary);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--nx-glass-border);
+  padding: 5px 10px;
+  border-radius: var(--nx-radius-pill);
+}
+
+.nx-wallet-network img {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+}
+
+.nx-wallet-address-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: auto;
+}
+
+.nx-wallet-address {
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--nx-text-primary);
+}
+
+.nx-wallet-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--nx-glass-border);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--nx-text-secondary);
+  cursor: pointer;
+  transition: background var(--nx-dur-fast) ease, color var(--nx-dur-fast) ease;
+}
+
+.nx-wallet-copy-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--nx-text-primary);
+}
+
+.nx-wallet-balance-label {
+  position: relative;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--nx-text-muted);
+  margin-top: 18px;
+  margin-bottom: 6px;
+}
+
+.nx-wallet-balance-value {
+  position: relative;
+  font-family: var(--font-display);
+  font-size: 36px;
+  font-weight: 800;
+  color: var(--nx-text-primary);
+  font-variant-numeric: tabular-nums;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.nx-wallet-balance-unit {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--nx-text-secondary);
+}
+
+.nx-wallet-card-status {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  margin-top: 14px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--nx-emerald);
+}
+
+.nx-wallet-disconnect-btn {
+  position: relative;
+  margin-top: 16px;
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: var(--nx-radius-pill);
+  border: 1px solid var(--nx-glass-border-strong);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--nx-text-secondary);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background var(--nx-dur-fast) ease, color var(--nx-dur-fast) ease, border-color var(--nx-dur-fast) ease;
+}
+
+.nx-wallet-disconnect-btn:hover {
+  background: rgba(248, 113, 113, 0.12);
+  color: var(--nx-red);
+  border-color: rgba(248, 113, 113, 0.35);
+}
+
+/* ---------- Holdings list ---------- */
+
+.nx-wallet-holdings-card {
+  height: 100%;
+}
+
+.nx-wallet-holdings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.nx-wallet-portfolio-link {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--nx-cyan-soft);
+  text-decoration: none;
+}
+
+.nx-wallet-portfolio-link:hover {
+  text-decoration: underline;
+}
+
+.nx-wallet-holdings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nx-wallet-loading {
+  padding: 20px 0;
+  text-align: center;
+  color: var(--nx-text-muted);
+  font-size: 13px;
+}
+
+.nx-wallet-holding-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 16px;
+  border-radius: var(--nx-radius-md);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid transparent;
+  transition: background var(--nx-dur-fast) ease, border-color var(--nx-dur-fast) ease;
+}
+
+.nx-wallet-holding-row:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--nx-glass-border);
+}
+
+.nx-wallet-holding-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.nx-wallet-holding-symbol {
+  font-size: 15.5px;
+  font-weight: 700;
+  color: var(--nx-text-primary);
+}
+
+.nx-wallet-holding-name {
+  font-size: 12.5px;
+  color: var(--nx-text-muted);
+}
+
+.nx-wallet-holding-balance {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--nx-text-primary);
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 900px) {
+  .nx-wallet-layout {
+    grid-template-columns: 1fr;
+  }
+  .nx-wallet-card {
+    aspect-ratio: unset;
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "name": "contracts-nexora",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Deployment scripts for Nexora's new tokens (Nova, Fusion, Vertex, Orbit) and their Uniswap V3 pools on Sepolia.",
+  "scripts": {
+    "compile": "hardhat compile",
+    "deploy:tokens": "hardhat run scripts/01-deploy-tokens.js --network sepolia",
+    "deploy:pools": "hardhat run scripts/02-create-pools-and-seed-liquidity.js --network sepolia",
+    "deploy:crosspools": "hardhat run scripts/04-create-cross-pools.js --network sepolia",
+    "deploy:exchange": "hardhat run scripts/05-deploy-fixed-rate-exchange.js --network sepolia",
+    "deploy:concentrated": "hardhat run scripts/07-create-concentrated-cross-pools.js --network sepolia",
+    "deploy:topup": "hardhat run scripts/08-topup-concentrated-liquidity.js --network sepolia",
+    "deploy:faucet": "hardhat run scripts/09-deploy-faucet.js --network sepolia",
+    "update:tokenlist": "node scripts/03-update-tokenlist.js"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^2.0.2",
+    "hardhat": "^2.22.0"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.9.6",
+    "@uniswap/sdk-core": "^4.2.0",
+    "@uniswap/v3-sdk": "^3.13.1",
+    "dotenv": "^16.4.5",
+    "ethers": "^5.7.2",
+    "jsbi": "^3.2.5"
+  }
+}

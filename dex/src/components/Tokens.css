@@ -1,0 +1,129 @@
+/* ==========================================================================
+   Tokens.js (Activity / Recent Transactions page, routed at /tokens).
+   Scoped entirely to nx-tx-* classes, layered on top of the shared
+   GlassCard/PageShell/TokenIcon/EmptyState primitives (see
+   components/ui/*.js + ui.css) so this page reads as one system with
+   Portfolio, Wallet, and the other redesigned pages instead of the
+   page-specific .tokensPage/.txRow styling it used to carry in App.css.
+   ========================================================================== */
+
+.nx-tx-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.nx-tx-count {
+  font-size: 12px;
+  color: var(--nx-text-muted);
+}
+
+.nx-tx-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.nx-tx-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.nx-tx-icons {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.nx-tx-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.nx-tx-pair {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--nx-text-primary);
+}
+
+.nx-tx-pair-link {
+  color: inherit;
+  text-decoration: none;
+  transition: color var(--nx-dur-fast) ease;
+}
+
+.nx-tx-pair-link:hover {
+  color: var(--nx-cyan-soft);
+}
+
+.nx-tx-arrow {
+  font-size: 11px;
+  color: var(--nx-text-muted);
+}
+
+.nx-tx-amounts {
+  font-size: 12px;
+  color: var(--nx-text-muted);
+  margin-top: 3px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nx-tx-recipient {
+  font-size: 10px;
+  color: var(--nx-amber);
+  margin-top: 3px;
+  font-family: "SFMono-Regular", Consolas, monospace;
+}
+
+.nx-tx-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.nx-tx-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--nx-emerald);
+  background: rgba(52, 211, 153, 0.12);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  padding: 2px 9px;
+  border-radius: var(--nx-radius-pill);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.nx-tx-time {
+  font-size: 11px;
+  color: var(--nx-text-faint);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.nx-tx-view {
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .nx-tx-row {
+    flex-wrap: wrap;
+  }
+  .nx-tx-meta {
+    align-items: flex-start;
+  }
+}

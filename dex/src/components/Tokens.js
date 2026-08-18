@@ -1,8 +1,15 @@
 import React, { useState, useEffect } from 'react'
 import { ethers } from "ethers";
+import { Link } from "react-router-dom";
 import { ArrowRightOutlined, CheckCircleFilled } from "@ant-design/icons";
 import tokenList from "../tokenList.json";
-import { handleTiltMove, handleTiltLeave } from "../tiltEffect";
+import analyticsConfig from "../analyticsConfig.json";
+import PageShell from "./ui/PageShell";
+import GlassCard from "./ui/GlassCard";
+import TokenIcon from "./ui/TokenIcon";
+import EmptyState from "./ui/EmptyState";
+import ThreeDBackground from "./ui/ThreeDBackground";
+import "./Tokens.css";
 
 // Only tokens that actually have a Sepolia testnet contract are relevant -
 // those are the only ones this app can ever swap, so they're the only ones
@@ -13,12 +20,19 @@ const TRANSFER_ABI = [
   "event Transfer(address indexed from, address indexed to, uint256 value)"
 ];
 
-// How far back to scan for history. Sepolia produces a block roughly every
-// 12s, so ~20,000 blocks is around 2-3 days of activity.
-const BLOCK_LOOKBACK = 20000;
+// Previously a fixed 20,000-block lookback ("~2-3 days") - but this protocol
+// was seeded well before that window on a long-lived testnet, so a real,
+// already-confirmed swap can simply age out of a fixed recent-blocks lookback
+// as more blocks are mined, with nothing wrong in the query logic itself.
+// analyticsConfig.scanFromBlock is the actual real anchor Insights/Analytics
+// already uses for "full history" (read-only import here, nothing in
+// Analytics/Insights is touched) - reusing it means this page's "recent
+// transactions" genuinely covers the protocol's whole real history instead
+// of an arbitrary, silently-shrinking recent window.
+const HISTORY_FROM_BLOCK = analyticsConfig.scanFromBlock;
 
 // RPC providers (Infura included) cap how many blocks a single eth_getLogs
-// call can cover - asking for the full BLOCK_LOOKBACK range in one request
+// call can cover - asking for the full history range in one request
 // gets rejected outright ("query range too large" / "more than 10000
 // results"). Splitting into smaller chunks avoids that.
 //
@@ -39,6 +53,8 @@ const CHUNK_SIZE = 5000;
 // after REQUEST_TIMEOUT_MS instead of hanging, which lets the page show a
 // real error and a Refresh option rather than spinning indefinitely.
 const REQUEST_TIMEOUT_MS = 15000;
+const MAX_RETRY_ATTEMPTS = 3;
+const BASE_BACKOFF_MS = 500;
 
 function withTimeout(promise, ms, label) {
   return Promise.race([
@@ -49,10 +65,38 @@ function withTimeout(promise, ms, label) {
   ]);
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 // Used to decode raw Transfer logs out of a transaction receipt (see below) -
 // same event shape as TRANSFER_ABI, just wrapped as an Interface so it can
 // parse logs that weren't fetched through a specific contract's queryFilter.
 const transferInterface = new ethers.utils.Interface(TRANSFER_ABI);
+
+// Retries one chunk with backoff instead of giving up on the first failure -
+// a wider history range means more chunks, which means more surface area
+// for a single RPC hiccup. Returns [] (never throws) if a chunk genuinely
+// can't be read after all retries, logging which range was lost so it's
+// visible rather than silently dropped, but critically WITHOUT rejecting
+// the Promise.all the caller runs this inside - one bad chunk must not
+// discard every other chunk that already succeeded.
+async function queryRangeWithRetry(contract, filter, from, to) {
+  let delay = BASE_BACKOFF_MS;
+  for (let attempt = 0; attempt < MAX_RETRY_ATTEMPTS; attempt++) {
+    try {
+      return await withTimeout(contract.queryFilter(filter, from, to), REQUEST_TIMEOUT_MS, "eth_getLogs");
+    } catch (err) {
+      if (attempt === MAX_RETRY_ATTEMPTS - 1) {
+        console.warn(`[History] chunk ${from}-${to} on ${contract.address} failed after ${MAX_RETRY_ATTEMPTS} attempts:`, err.message);
+        return [];
+      }
+      await sleep(delay);
+      delay *= 2;
+    }
+  }
+  return [];
+}
 
 async function queryFilterChunked(contract, filter, fromBlock, toBlock) {
   const ranges = [];
@@ -60,9 +104,7 @@ async function queryFilterChunked(contract, filter, fromBlock, toBlock) {
     ranges.push([start, Math.min(start + CHUNK_SIZE - 1, toBlock)]);
   }
   const chunkResults = await Promise.all(
-    ranges.map(([start, end]) =>
-      withTimeout(contract.queryFilter(filter, start, end), REQUEST_TIMEOUT_MS, "eth_getLogs")
-    )
+    ranges.map(([start, end]) => queryRangeWithRetry(contract, filter, start, end))
   );
   return chunkResults.flat();
 }
@@ -106,15 +148,25 @@ function Tokens({ isConnected, address }) {
     setLoading(true);
     setError(null);
     try {
+      console.debug(`[History] RPC endpoint = ${process.env.REACT_APP_INFURA_URL}`);
+      console.debug(`[History] connected wallet = ${address}`);
+
       const provider = new ethers.providers.JsonRpcProvider(process.env.REACT_APP_INFURA_URL);
       const latestBlock = await withTimeout(provider.getBlockNumber(), REQUEST_TIMEOUT_MS, "getBlockNumber");
       setLatestBlock(latestBlock);
-      const fromBlock = Math.max(0, latestBlock - BLOCK_LOOKBACK);
+      const fromBlock = Math.max(0, HISTORY_FROM_BLOCK);
+
+      console.debug(`[History] latest block = ${latestBlock}`);
+      console.debug(`[History] from block = ${fromBlock} (${latestBlock - fromBlock} blocks of history scanned)`);
 
       // Pull every USDC/WETH Transfer event where this wallet is either the
-      // sender or the receiver. Chunked to stay under the RPC provider's
-      // per-request block-range limit, and every token/direction/chunk runs
-      // concurrently (not one after another) to keep this fast.
+      // sender or the receiver. Filtered by wallet address at the RPC topic
+      // level (contract.filters.Transfer(address, null) / (null, address)
+      // encode the wallet directly into the indexed-topic filter, so the
+      // node does the filtering, not this code after the fact) - chunked to
+      // stay under the RPC provider's per-request block-range limit, and
+      // every token/direction/chunk runs concurrently (not one after
+      // another) to keep this fast.
       const perTokenResults = await Promise.all(
         SEPOLIA_TOKENS.map(async (token) => {
           const contract = new ethers.Contract(token.sepoliaAddress, TRANSFER_ABI, provider);
@@ -133,7 +185,21 @@ function Tokens({ isConnected, address }) {
           }));
         })
       );
-      const transfers = perTokenResults.flat();
+
+      // Dedupe by transactionHash + logIndex - the sent/received filters are
+      // mutually exclusive for a normal transfer, but this guards against
+      // any edge case (e.g. a self-transfer matching both) double-counting
+      // the same on-chain log.
+      const seenLogKeys = new Set();
+      const transfers = [];
+      for (const t of perTokenResults.flat()) {
+        const key = `${t.txHash.toLowerCase()}-${t.logIndex}`;
+        if (seenLogKeys.has(key)) continue;
+        seenLogKeys.add(key);
+        transfers.push(t);
+      }
+      console.debug(`[History] Transfer logs found = ${transfers.length}`);
+      console.debug(`[History] matching wallet logs (post wallet-topic filter, deduped) = ${transfers.length}`);
 
       // A swap shows up as exactly one outgoing transfer (tokenIn, from you)
       // and one incoming transfer (tokenOut, to you) inside the same
@@ -210,6 +276,8 @@ function Tokens({ isConnected, address }) {
       }
 
       swapRows.sort((a, b) => b.blockNumber - a.blockNumber);
+      console.debug(`[History] reconstructed swaps = ${swapRows.length}`);
+      console.debug(`[History] final displayed swaps = ${swapRows.length}`);
       setRows(swapRows);
     } catch (err) {
       console.error("Failed to load swap history:", err);
@@ -222,73 +290,122 @@ function Tokens({ isConnected, address }) {
 
   if (!isConnected) {
     return (
-      <div className="tokensPage">
-        <div className="tokensEmpty">Connect your wallet to see your swap history.</div>
-      </div>
+      <PageShell
+        eyebrow="Activity"
+        title="Recent Transactions"
+        subtitle="Every swap you've made on Nexora, reconstructed live from on-chain Transfer events."
+        background={<ThreeDBackground intensity={2} />}
+      >
+        <EmptyState
+          icon="👛"
+          title="Wallet not connected"
+          description="Connect your wallet from the navbar to see your swap history."
+        />
+      </PageShell>
     );
   }
 
   return (
-    <div className="tokensPage">
-      <div className="tokensHeader">
-        <h4>Recent Transactions</h4>
-        <span className="tokensRefresh" onClick={fetchHistory}>Refresh</span>
+    <PageShell
+      eyebrow="Activity"
+      title="Recent Transactions"
+      subtitle="Every swap you've made on Nexora, reconstructed live from on-chain Transfer events."
+      background={<ThreeDBackground intensity={2} />}
+    >
+      <div className="nx-tx-toolbar">
+        <span className="nx-tx-count">
+          {!loading && !error
+            ? `${rows.length} swap${rows.length === 1 ? "" : "s"} · full history since block ${HISTORY_FROM_BLOCK.toLocaleString()}`
+            : " "}
+        </span>
+        <button className="nx-btn nx-btn-secondary nx-btn-sm" onClick={fetchHistory} disabled={loading}>
+          {loading ? "Refreshing…" : "Refresh"}
+        </button>
       </div>
 
-      {loading && <div className="tokensEmpty">Loading swap history...</div>}
-      {!loading && error && <div className="tokensEmpty">{error}</div>}
+      {loading && (
+        <EmptyState
+          icon="⏳"
+          title="Loading swap history"
+          description="Scanning on-chain Transfer events across the protocol's full history."
+        />
+      )}
+
+      {!loading && error && (
+        <EmptyState
+          icon="⚠"
+          title="Couldn't load activity"
+          description={error}
+          action={
+            <button className="nx-btn nx-btn-secondary nx-btn-sm" onClick={fetchHistory}>
+              Try again
+            </button>
+          }
+        />
+      )}
+
       {!loading && !error && rows.length === 0 && (
-        <div className="tokensEmpty">No swaps found in the last ~{BLOCK_LOOKBACK.toLocaleString()} blocks.</div>
+        <EmptyState
+          icon="📭"
+          title="No swaps yet"
+          description={`No swaps found since block ${HISTORY_FROM_BLOCK.toLocaleString()} (the protocol's full history). Make a swap to see it appear here.`}
+          action={
+            <Link to="/swap" className="nx-btn nx-btn-primary nx-btn-sm">
+              Go to Swap
+            </Link>
+          }
+        />
       )}
 
       {!loading && !error && rows.length > 0 && (
-        <div className="txList">
+        <div className="nx-tx-list">
           {rows.map((row) => (
-            <div
-              className="txRow"
-              key={row.txHash}
-              onMouseMove={handleTiltMove}
-              onMouseLeave={handleTiltLeave}
-            >
-              <div className="txPairIcons">
-                <img src={row.tokenIn.img} alt={row.tokenIn.ticker} className="txRowLogo" />
-                <img src={row.tokenOut.img} alt={row.tokenOut.ticker} className="txRowLogo txRowLogoOverlap" />
+            <GlassCard key={row.txHash} hoverable tilt pad="sm" className="nx-tx-row">
+              <div className="nx-tx-icons">
+                <TokenIcon symbol={row.tokenIn.ticker} src={row.tokenIn.img} size={30} />
+                <TokenIcon symbol={row.tokenOut.ticker} src={row.tokenOut.img} size={30} style={{ marginLeft: -10 }} />
               </div>
 
-              <div className="txRowInfo">
-                <div className="txRowPair">
-                  {row.tokenIn.ticker} <ArrowRightOutlined className="txRowArrow" /> {row.tokenOut.ticker}
+              <div className="nx-tx-info">
+                <div className="nx-tx-pair">
+                  <Link to={`/explorer/${row.tokenIn.ticker}`} className="nx-tx-pair-link">
+                    {row.tokenIn.ticker}
+                  </Link>
+                  <ArrowRightOutlined className="nx-tx-arrow" />
+                  <Link to={`/explorer/${row.tokenOut.ticker}`} className="nx-tx-pair-link">
+                    {row.tokenOut.ticker}
+                  </Link>
                 </div>
-                <div className="txRowAmounts">
+                <div className="nx-tx-amounts">
                   {Number(row.amountIn).toFixed(6)} {row.tokenIn.ticker} → {Number(row.amountOut).toFixed(6)} {row.tokenOut.ticker}
                 </div>
                 {row.recipient && (
-                  <div className="txRowRecipient">
+                  <div className="nx-tx-recipient">
                     Sent to {row.recipient.slice(0, 6)}...{row.recipient.slice(-4)}
                   </div>
                 )}
               </div>
 
-              <div className="txRowMeta">
-                <span className="txStatusBadge">
+              <div className="nx-tx-meta">
+                <span className="nx-tx-status">
                   <CheckCircleFilled /> Completed
                 </span>
-                <span className="txRowTime">{formatRelativeTime(row.blockNumber, latestBlock)}</span>
+                <span className="nx-tx-time">{formatRelativeTime(row.blockNumber, latestBlock)}</span>
               </div>
 
               <a
-                className="txViewBtn"
+                className="nx-btn nx-btn-secondary nx-btn-sm nx-tx-view"
                 href={`https://sepolia.etherscan.io/tx/${row.txHash}`}
                 target="_blank"
                 rel="noreferrer"
               >
                 View
               </a>
-            </div>
+            </GlassCard>
           ))}
         </div>
       )}
-    </div>
+    </PageShell>
   );
 }
 

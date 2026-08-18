@@ -1,0 +1,71 @@
+.nx-al-card {
+  max-width: 460px;
+  margin: 0 auto;
+}
+
+.nx-al-token-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px;
+  margin-bottom: 12px;
+}
+
+.nx-al-token-select {
+  background: transparent;
+  border: none;
+  color: var(--nx-text-primary);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 15px;
+  outline: none;
+  cursor: pointer;
+}
+
+.nx-al-token-select option {
+  background: var(--nx-bg-panel);
+  color: var(--nx-text-primary);
+}
+
+.nx-al-amount-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--nx-text-primary);
+  font-size: 22px;
+  font-weight: 700;
+  font-family: var(--font-display);
+  text-align: right;
+  min-width: 0;
+}
+
+.nx-al-plus {
+  text-align: center;
+  margin: -2px 0 10px;
+  color: var(--nx-text-muted);
+  font-size: 18px;
+}
+
+.nx-al-summary-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12.5px;
+  color: var(--nx-text-secondary);
+  padding: 7px 0;
+}
+
+.nx-al-summary-row strong {
+  color: var(--nx-text-primary);
+}
+
+.nx-al-banner {
+  margin-top: 16px;
+  padding: 13px 16px;
+  border-radius: var(--nx-radius-md);
+  background: rgba(250, 204, 21, 0.08);
+  border: 1px solid rgba(250, 204, 21, 0.3);
+  color: #fde68a;
+  font-size: 12px;
+  line-height: 1.6;
+}

@@ -1,0 +1,493 @@
+/* Scoped entirely to the Nexora Token Faucet page - every rule here is
+   under .nf-page or targets .nf-* classes, so nothing here can affect the
+   Swap/Wallet/Pool/Transactions/Chart pages or the shared header. */
+
+.nf-page {
+  position: relative;
+  min-height: calc(100vh - 64px);
+  width: 100%;
+  padding: 64px 20px 96px;
+  box-sizing: border-box;
+  overflow: hidden;
+  color: #e8ebf7;
+  font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+.nf-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background: radial-gradient(ellipse at 30% 0%, #12142c 0%, #050614 55%, #030309 100%);
+}
+
+.nf-canvas {
+  /* position/size are set inline on the Canvas component itself (see
+     NexoraFaucetScene.js) so they're not dependent on this stylesheet's
+     load timing - only non-dimensional concerns live here. */
+  z-index: -1;
+  pointer-events: none;
+}
+
+.nf-content {
+  position: relative;
+  z-index: 1;
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+/* ---------- Hero ---------- */
+
+.nf-hero {
+  text-align: center;
+  padding-bottom: 56px;
+}
+
+.nf-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(232, 235, 247, 0.6);
+  margin-bottom: 28px;
+}
+
+.nf-eyebrow-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #34d399;
+  box-shadow: 0 0 8px #34d399;
+  animation: nf-pulse 2s ease-in-out infinite;
+}
+
+.nf-title {
+  font-size: clamp(2.4rem, 6vw, 4.2rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  margin: 0 0 20px;
+  background: linear-gradient(120deg, #7dd3fc 0%, #e8ebf7 35%, #c4b5fd 65%, #6ee7b7 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 60px rgba(125, 211, 252, 0.25);
+}
+
+.nf-subtitle {
+  font-size: clamp(0.95rem, 1.6vw, 1.15rem);
+  color: rgba(232, 235, 247, 0.55);
+  max-width: 560px;
+  margin: 0 auto 36px;
+  line-height: 1.6;
+}
+
+/* ---------- Info strip (contract / cooldown / claim amount) ---------- */
+
+.nf-info-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.nf-info-tile {
+  padding: 16px 18px;
+  border-radius: 16px;
+  text-align: left;
+}
+
+.nf-info-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(232, 235, 247, 0.4);
+  margin-bottom: 6px;
+}
+
+.nf-info-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #e8ebf7;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  word-break: break-all;
+}
+
+.nf-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #34d399;
+  box-shadow: 0 0 10px #34d399;
+  flex-shrink: 0;
+  animation: nf-pulse 2s ease-in-out infinite;
+}
+
+/* ---------- Glass surface (shared by cards + connect prompt) ---------- */
+
+.nf-glass {
+  position: relative;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.015));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+}
+
+.nf-glass::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: 20px;
+  padding: 1px;
+  background: conic-gradient(from var(--nf-angle, 0deg), #22d3ee, #a855f7, #34d399, #3b82f6, #22d3ee);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0.4;
+  pointer-events: none;
+  animation: nf-border-spin 7s linear infinite;
+}
+
+@property --nf-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes nf-border-spin {
+  to {
+    --nf-angle: 360deg;
+  }
+}
+
+@keyframes nf-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ---------- Section headings ---------- */
+
+.nf-section {
+  margin-top: 56px;
+}
+
+.nf-section-heading {
+  text-align: center;
+  font-size: clamp(1.3rem, 2.4vw, 1.7rem);
+  font-weight: 700;
+  color: #e8ebf7;
+  margin: 0 0 8px;
+}
+
+.nf-section-sub {
+  text-align: center;
+  font-size: 13px;
+  color: rgba(232, 235, 247, 0.45);
+  margin: 0 0 32px;
+}
+
+/* ---------- Connect prompt ---------- */
+
+.nf-connect-card {
+  max-width: 460px;
+  margin: 0 auto;
+  padding: 36px 32px;
+  text-align: center;
+}
+
+.nf-connect-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.nf-connect-desc {
+  font-size: 13px;
+  color: rgba(232, 235, 247, 0.5);
+  margin-bottom: 24px;
+  line-height: 1.6;
+}
+
+/* ---------- Token cards ---------- */
+
+.nf-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 18px;
+}
+
+.nf-card {
+  padding: 26px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.nf-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 16px 40px rgba(34, 211, 238, 0.12);
+}
+
+.nf-card-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nf-card-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  flex-shrink: 0;
+}
+
+.nf-card-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #e8ebf7;
+}
+
+.nf-card-ticker {
+  font-size: 11px;
+  color: rgba(232, 235, 247, 0.4);
+  letter-spacing: 0.04em;
+}
+
+.nf-card-balance {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.nf-card-balance-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(232, 235, 247, 0.4);
+  margin-bottom: 4px;
+}
+
+.nf-card-balance-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: #e8ebf7;
+  font-variant-numeric: tabular-nums;
+}
+
+.nf-tx-row {
+  font-size: 11px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(52, 211, 153, 0.08);
+  border: 1px solid rgba(52, 211, 153, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.nf-tx-label {
+  color: #6ee7b7;
+  font-weight: 600;
+}
+
+.nf-tx-hash {
+  font-family: "SFMono-Regular", Consolas, monospace;
+  color: rgba(232, 235, 247, 0.7);
+  word-break: break-all;
+}
+
+.nf-tx-link {
+  color: #7dd3fc;
+  text-decoration: underline;
+  width: fit-content;
+}
+
+.nf-card-actions {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.nf-btn {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  border-radius: 999px;
+  padding: 12px 18px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  transition: transform 0.15s ease, box-shadow 0.25s ease, opacity 0.2s ease;
+}
+
+.nf-btn:active {
+  transform: scale(0.97);
+}
+
+.nf-btn-primary {
+  color: #04121a;
+  background: linear-gradient(90deg, #22d3ee, #34d399);
+  box-shadow: 0 0 0 rgba(34, 211, 238, 0);
+}
+
+.nf-btn-primary:hover:not(:disabled) {
+  box-shadow: 0 6px 24px rgba(34, 211, 238, 0.35);
+}
+
+.nf-btn-primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.nf-btn-secondary {
+  color: rgba(232, 235, 247, 0.75);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.nf-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.nf-btn-full {
+  width: 100%;
+}
+
+/* ---------- Per-token accent glow (claim cards + external faucet cards) ---------- */
+/* Each card carries a --nf-card-accent (claim grid) or --nf-faucet-accent
+   (Faucets.js external-links grid) custom property set inline per token, so
+   the glow ties back to that token's real brand color instead of one
+   generic hue for every card. */
+
+.nf-card {
+  --nf-card-accent: #22d3ee;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.nf-card:hover {
+  border-color: color-mix(in srgb, var(--nf-card-accent) 45%, rgba(255, 255, 255, 0.09));
+  box-shadow: 0 16px 40px color-mix(in srgb, var(--nf-card-accent) 22%, transparent);
+}
+
+.nf-card-icon-accent {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--nf-card-accent) 55%, transparent);
+}
+
+/* ---------- Status pill (Ready / Claiming / Cooldown) ---------- */
+
+.nf-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 11px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  width: fit-content;
+}
+
+.nf-status-pill::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.nf-status-ready {
+  color: #6ee7b7;
+  background: rgba(52, 211, 153, 0.12);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+}
+.nf-status-ready::before {
+  background: #34d399;
+  box-shadow: 0 0 8px #34d399;
+  animation: nf-pulse 2s ease-in-out infinite;
+}
+
+.nf-status-claiming {
+  color: #7dd3fc;
+  background: rgba(34, 211, 238, 0.12);
+  border: 1px solid rgba(34, 211, 238, 0.3);
+}
+.nf-status-claiming::before {
+  background: #22d3ee;
+  box-shadow: 0 0 8px #22d3ee;
+  animation: nf-pulse 1s ease-in-out infinite;
+}
+
+.nf-status-cooldown {
+  color: #fde68a;
+  background: rgba(250, 204, 21, 0.1);
+  border: 1px solid rgba(250, 204, 21, 0.28);
+}
+.nf-status-cooldown::before {
+  background: #facc15;
+}
+
+/* ---------- Faucets.js external-links grid (shares the .nf-* system) ---------- */
+
+.nf-faucets-grid {
+  margin-top: 8px;
+}
+
+.nf-faucet-card {
+  --nf-card-accent: var(--nf-faucet-accent, #22d3ee);
+}
+
+.nf-faucet-card-desc {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: rgba(232, 235, 247, 0.6);
+  flex: 1;
+}
+
+.nf-faucet-card-cta {
+  margin-top: auto;
+  text-align: center;
+  text-decoration: none;
+  display: block;
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 640px) {
+  .nf-page {
+    padding: 48px 14px 72px;
+  }
+  .nf-info-strip {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Reduced motion ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .nf-eyebrow-dot,
+  .nf-status-dot {
+    animation: none;
+  }
+  .nf-glass::before {
+    animation: none;
+  }
+}
