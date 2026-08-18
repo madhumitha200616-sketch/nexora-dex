@@ -1,5 +1,5 @@
 {
-  "buildCommand": "cd dex && npm install && npm run build",
-  "outputDirectory": "dex/build",
+  "buildCommand": "npm install && npm run build",
+  "outputDirectory": "build",
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
 }
